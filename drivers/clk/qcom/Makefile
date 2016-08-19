@@ -22,6 +22,7 @@ clk-qcom-y += gdsc-regulator_legacy.o
 else
 clk-qcom-y += gdsc-regulator.o
 endif
+clk-qcom-y += clk-voter.o
 clk-qcom-$(CONFIG_QCOM_GDSC) += gdsc.o
 obj-$(CONFIG_COMMON_CLK_QCOM) += clk-dummy.o
 
