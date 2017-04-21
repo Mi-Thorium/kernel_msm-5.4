@@ -996,19 +996,6 @@ int clk_prepare(struct clk *clk)
 	if (!clk)
 		return 0;
 
-	/*
-	 * setting CLK_ENABLE_HAND_OFF flag triggers this conditional
-	 *
-	 * need_handoff_prepare implies this clk was already prepared by
-	 * __clk_init. now we have a proper user, so unset the flag in our
-	 * internal bookkeeping. See CLK_ENABLE_HAND_OFF flag in clk-provider.h
-	 * for details.
-	 */
-	if (clk->core->need_handoff_prepare) {
-		clk->core->need_handoff_prepare = false;
-		return 0;
-	}
-
 	return clk_core_prepare_lock(clk->core);
 }
 EXPORT_SYMBOL_GPL(clk_prepare);
@@ -1231,19 +1218,6 @@ int clk_enable(struct clk *clk)
 	if (!clk)
 		return 0;
 
-	/*
-	 * setting CLK_ENABLE_HAND_OFF flag triggers this conditional
-	 *
-	 * need_handoff_enable implies this clk was already enabled by
-	 * __clk_init. now we have a proper user, so unset the flag in our
-	 * internal bookkeeping. See CLK_ENABLE_HAND_OFF flag in clk-provider.h
-	 * for details.
-	 */
-	if (clk->core->need_handoff_enable) {
-		clk->core->need_handoff_enable = false;
-		return 0;
-	}
-
 	return clk_core_enable_lock(clk->core);
 }
 EXPORT_SYMBOL_GPL(clk_enable);
@@ -1282,6 +1256,19 @@ static void clk_unprepare_unused_subtree(struct clk_core *core)
 	    !(core->flags & CLK_DONT_HOLD_STATE))
 		return;
 
+	/*
+	 * setting CLK_ENABLE_HAND_OFF flag triggers this conditional
+	 *
+	 * need_handoff_prepare implies this clk was already prepared by
+	 * __clk_init. now we have a proper user, so unset the flag in our
+	 * internal bookkeeping. See CLK_ENABLE_HAND_OFF flag in clk-provider.h
+	 * for details.
+	 */
+	if (core->need_handoff_prepare) {
+		core->need_handoff_prepare = false;
+		clk_core_unprepare(core);
+	}
+
 	if (core->prepare_count)
 		return;
 
@@ -1312,6 +1299,21 @@ static void clk_disable_unused_subtree(struct clk_core *core)
 
 	hlist_for_each_entry(child, &core->children, child_node)
 		clk_disable_unused_subtree(child);
+
+	/*
+	 * setting CLK_ENABLE_HAND_OFF flag triggers this conditional
+	 *
+	 * need_handoff_enable implies this clk was already enabled by
+	 * __clk_init. now we have a proper user, so unset the flag in our
+	 * internal bookkeeping. See CLK_ENABLE_HAND_OFF flag in clk-provider.h
+	 * for details.
+	 */
+	if (core->need_handoff_enable) {
+		core->need_handoff_enable = false;
+		flags = clk_enable_lock();
+		clk_core_disable(core);
+		clk_enable_unlock(flags);
+	}
 
 	if (dev_has_sync_state(core->dev) &&
 	    !(core->flags & CLK_DONT_HOLD_STATE))
@@ -3905,14 +3907,22 @@ static int __clk_core_init(struct clk_core *core)
 	if (core->flags & CLK_ENABLE_HAND_OFF) {
 		unsigned long flags;
 
-		core->need_handoff_prepare = true;
-		core->need_handoff_enable = true;
-		ret = clk_core_prepare(core);
-		if (ret)
-			goto out;
-		flags = clk_enable_lock();
-		clk_core_enable(core);
-		clk_enable_unlock(flags);
+		/*
+		 * Few clocks might have hardware gating which would be
+		 * required to be ON before prepare/enabling the clocks. So
+		 * check if the clock has been turned ON earlier and we should
+		 * prepare/enable those clocks.
+		 */
+		if (clk_core_is_enabled(core)) {
+			core->need_handoff_prepare = true;
+			core->need_handoff_enable = true;
+			ret = clk_core_prepare(core);
+			if (ret)
+				goto out;
+			flags = clk_enable_lock();
+			clk_core_enable(core);
+			clk_enable_unlock(flags);
+		}
 	}
 
 	kref_init(&core->ref);
