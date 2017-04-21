@@ -34,6 +34,11 @@
 #define CLK_DUTY_CYCLE_PARENT	BIT(13)
 #define CLK_DONT_HOLD_STATE	BIT(14) /* Don't hold state */
 #define CLK_IS_MEASURE		BIT(15) /* clock used for measurement only */
+#define CLK_ENABLE_HAND_OFF	BIT(16) /* enable clock when registered. */
+					/*
+					 * hand-off enable_count & prepare_count
+					 * to first consumer that enables clk
+					 */
 
 struct clk;
 struct clk_hw;
