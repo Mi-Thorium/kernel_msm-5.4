@@ -139,6 +139,7 @@ static struct arm_smmu_option_prop arm_smmu_options[] = {
 	{ ARM_SMMU_OPT_NO_ASID_RETENTION, "qcom,no-asid-retention" },
 	{ ARM_SMMU_OPT_DISABLE_ATOS, "qcom,disable-atos" },
 	{ ARM_SMMU_OPT_SPLIT_TABLES, "qcom,split-tables" },
+	{ ARM_SMMU_OPT_STATIC_CB, "qcom,enable-static-cb"},
 	{ 0, NULL},
 };
 
@@ -183,6 +184,8 @@ static inline void arm_smmu_rpm_put(struct arm_smmu_device *smmu)
 		pm_runtime_put(smmu->dev);
 }
 
+static bool arm_smmu_is_static_cb(struct arm_smmu_device *smmu);
+
 static struct arm_smmu_domain *to_smmu_domain(struct iommu_domain *dom)
 {
 	struct msm_iommu_domain *msm_domain = to_msm_iommu_domain(dom);
@@ -225,6 +228,11 @@ static bool is_iommu_pt_coherent(struct arm_smmu_domain *smmu_domain)
 		return dev_is_dma_coherent(smmu_domain->smmu->dev);
 	else
 		return false;
+}
+
+static bool arm_smmu_is_static_cb(struct arm_smmu_device *smmu)
+{
+	return smmu->options & ARM_SMMU_OPT_STATIC_CB;
 }
 
 static bool arm_smmu_has_secure_vmid(struct arm_smmu_domain *smmu_domain)
@@ -4411,7 +4419,7 @@ static int arm_smmu_alloc_cb(struct iommu_domain *domain,
 			cb = smmu->s2crs[idx].cbndx;
 	}
 
-	if (cb < 0) {
+	if (cb < 0 && !arm_smmu_is_static_cb(smmu)) {
 		mutex_unlock(&smmu->stream_map_mutex);
 		return __arm_smmu_alloc_cb(smmu, smmu->num_s2_context_banks,
 					   dev);
