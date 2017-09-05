@@ -7,6 +7,8 @@
 
 #include <linux/scatterlist.h>
 
+#include <soc/qcom/msm_tz_smmu.h>
+
 #define to_msm_io_pgtable_info(_cfg) \
 	container_of(_cfg, struct msm_io_pgtable_info, pgtbl_cfg)
 
@@ -23,6 +25,7 @@ enum io_pgtable_fmt {
 #ifdef CONFIG_IOMMU_IO_PGTABLE_FAST
 	ARM_V8L_FAST,
 #endif
+	ARM_MSM_SECURE,
 	IO_PGTABLE_NUM_FMTS,
 };
 
@@ -163,6 +166,11 @@ struct io_pgtable_cfg {
 			u64	transtab;
 			u64	memattr;
 		} arm_mali_lpae_cfg;
+
+		struct {
+			enum tz_smmu_device_id sec_id;
+			int cbndx;
+		} arm_msm_secure_cfg;
 	};
 };
 
@@ -338,6 +346,7 @@ extern struct io_pgtable_init_fns io_pgtable_arm_mali_lpae_init_fns;
 #ifdef CONFIG_IOMMU_IO_PGTABLE_FAST
 extern struct io_pgtable_init_fns io_pgtable_av8l_fast_init_fns;
 #endif
+extern struct io_pgtable_init_fns io_pgtable_arm_msm_secure_init_fns;
 
 /**
  * io_pgtable_alloc_pages_exact:
