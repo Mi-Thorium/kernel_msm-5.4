@@ -45,6 +45,11 @@ struct qsmmuv2_archdata {
 #define to_qsmmuv2_archdata(smmu)				\
 	container_of(smmu, struct qsmmuv2_archdata, smmu)
 
+static bool arm_smmu_is_static_cb(struct arm_smmu_device *smmu)
+{
+	return smmu->options & ARM_SMMU_OPT_STATIC_CB;
+}
+
 static int qsmmuv2_wait_for_halt(struct arm_smmu_device *smmu)
 {
 	void __iomem *reg = arm_smmu_page(smmu, ARM_SMMU_IMPL_DEF1);
@@ -62,14 +67,27 @@ static int qsmmuv2_wait_for_halt(struct arm_smmu_device *smmu)
 
 static int __qsmmuv2_halt(struct arm_smmu_device *smmu, bool wait)
 {
+	void __iomem *impl_def1_base = arm_smmu_page(smmu, ARM_SMMU_IMPL_DEF1);
 	u32 val;
 
 	val = arm_smmu_readl(smmu, ARM_SMMU_IMPL_DEF1,
 			     IMPL_DEF1_MICRO_MMU_CTRL);
 	val |= MICRO_MMU_CTRL_LOCAL_HALT_REQ;
 
-	arm_smmu_writel(smmu, ARM_SMMU_IMPL_DEF1, IMPL_DEF1_MICRO_MMU_CTRL,
-			val);
+	if (arm_smmu_is_static_cb(smmu)) {
+		phys_addr_t impl_def1_base_phys = impl_def1_base - smmu->base +
+							smmu->phys_addr;
+
+		if (scm_io_write(impl_def1_base_phys +
+					IMPL_DEF1_MICRO_MMU_CTRL, val)) {
+			dev_err(smmu->dev,
+				"scm_io_write fail. SMMU might not be halted");
+			return -EINVAL;
+		}
+	} else {
+		arm_smmu_writel(smmu, ARM_SMMU_IMPL_DEF1, IMPL_DEF1_MICRO_MMU_CTRL,
+				val);
+	}
 
 	return wait ? qsmmuv2_wait_for_halt(smmu) : 0;
 }
@@ -86,14 +104,25 @@ static int qsmmuv2_halt_nowait(struct arm_smmu_device *smmu)
 
 static void qsmmuv2_resume(struct arm_smmu_device *smmu)
 {
+	void __iomem *impl_def1_base = arm_smmu_page(smmu, ARM_SMMU_IMPL_DEF1);
 	u32 val;
 
 	val = arm_smmu_readl(smmu, ARM_SMMU_IMPL_DEF1,
 			     IMPL_DEF1_MICRO_MMU_CTRL);
 	val &= ~MICRO_MMU_CTRL_LOCAL_HALT_REQ;
 
-	arm_smmu_writel(smmu, ARM_SMMU_IMPL_DEF1, IMPL_DEF1_MICRO_MMU_CTRL,
-			val);
+	if (arm_smmu_is_static_cb(smmu)) {
+		phys_addr_t impl_def1_base_phys = impl_def1_base - smmu->base +
+							smmu->phys_addr;
+
+		if (scm_io_write(impl_def1_base_phys +
+				IMPL_DEF1_MICRO_MMU_CTRL, val))
+			dev_err(smmu->dev,
+				"scm_io_write fail. SMMU might not be resumed");
+	} else {
+		arm_smmu_writel(smmu, ARM_SMMU_IMPL_DEF1, IMPL_DEF1_MICRO_MMU_CTRL,
+				val);
+	}
 }
 
 

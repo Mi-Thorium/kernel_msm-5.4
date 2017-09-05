@@ -170,6 +170,8 @@ static int __arm_smmu_domain_set_attr(struct iommu_domain *domain,
 static int arm_smmu_domain_get_attr(struct iommu_domain *domain,
 				    enum iommu_attr attr, void *data);
 
+static bool arm_smmu_is_slave_side_secure(struct arm_smmu_domain *smmu_domain);
+
 static inline int arm_smmu_rpm_get(struct arm_smmu_device *smmu)
 {
 	if (pm_runtime_enabled(smmu->dev))
@@ -219,6 +221,23 @@ static bool is_dynamic_domain(struct iommu_domain *domain)
 	return test_bit(DOMAIN_ATTR_DYNAMIC, smmu_domain->attributes);
 }
 
+static int arm_smmu_restore_sec_cfg(struct arm_smmu_device *smmu)
+{
+	int ret;
+	int scm_ret = 0;
+
+	if (!arm_smmu_is_static_cb(smmu))
+		return 0;
+
+	ret = scm_restore_sec_cfg(smmu->sec_id, 0x0, &scm_ret);
+	if (ret || scm_ret) {
+		pr_err("scm call IOMMU_SECURE_CFG failed\n");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static bool is_iommu_pt_coherent(struct arm_smmu_domain *smmu_domain)
 {
 	if (test_bit(DOMAIN_ATTR_PAGE_TABLE_FORCE_COHERENT,
@@ -238,6 +257,12 @@ static bool arm_smmu_is_static_cb(struct arm_smmu_device *smmu)
 static bool arm_smmu_has_secure_vmid(struct arm_smmu_domain *smmu_domain)
 {
 	return (smmu_domain->secure_vmid != VMID_INVAL);
+}
+
+static bool arm_smmu_is_slave_side_secure(struct arm_smmu_domain *smmu_domain)
+{
+	return arm_smmu_has_secure_vmid(smmu_domain) &&
+			smmu_domain->slave_side_secure;
 }
 
 static void arm_smmu_secure_domain_lock(struct arm_smmu_domain *smmu_domain)
@@ -1578,6 +1603,22 @@ static u32 arm_smmu_tcr(u64 tcr, bool split_tables)
 	return tcr_out;
 }
 
+static int arm_smmu_set_pt_format(struct arm_smmu_domain *smmu_domain,
+				  struct io_pgtable_cfg *pgtbl_cfg)
+{
+	struct arm_smmu_device *smmu = smmu_domain->smmu;
+	struct arm_smmu_cfg *cfg = &smmu_domain->cfg;
+	int ret = 0;
+
+	if ((smmu->version > ARM_SMMU_V1) &&
+	    (cfg->fmt == ARM_SMMU_CTX_FMT_AARCH64) &&
+	    !arm_smmu_has_secure_vmid(smmu_domain) &&
+	    arm_smmu_is_static_cb(smmu)) {
+		ret = msm_tz_set_cb_format(smmu->sec_id, cfg->cbndx);
+	}
+	return ret;
+}
+
 static void arm_smmu_init_context_bank(struct arm_smmu_domain *smmu_domain,
 				       struct msm_io_pgtable_info *pgtbl_info)
 {
@@ -2042,6 +2083,14 @@ static int arm_smmu_setup_context_bank(struct arm_smmu_domain *smmu_domain,
 			cfg->irptndx = cfg->cbndx;
 		}
 
+		/* for slave side secure, we may have to force the pagetable
+		 * format to V8L.
+		 */
+		ret = arm_smmu_set_pt_format(smmu_domain,
+					     &smmu_domain->pgtbl_info[0].pgtbl_cfg);
+		if (ret)
+			return ret;
+
 		/*
 		 * Request context fault interrupt. Do this last to avoid the
 		 * handler seeing a half-initialised domain state.
@@ -2230,16 +2279,29 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 		goto out_clear_smmu;
 	}
 
-	ttbr0_pgtbl_info->pgtbl_cfg = (struct io_pgtable_cfg) {
-		.quirks		= quirks,
-		.pgsize_bitmap	= smmu->pgsize_bitmap,
-		.ias		= ias,
-		.oas		= oas,
-		.coherent_walk	= is_iommu_pt_coherent(smmu_domain),
-		.tlb		= &smmu_domain->flush_ops->tlb,
-		.iommu_pgtable_ops = &arm_smmu_pgtable_ops,
-		.iommu_dev	= smmu->dev,
-	};
+	if (arm_smmu_is_slave_side_secure(smmu_domain)) {
+		ttbr0_pgtbl_info->pgtbl_cfg = (struct io_pgtable_cfg) {
+			.quirks		= quirks,
+			.pgsize_bitmap	= smmu->pgsize_bitmap,
+			.arm_msm_secure_cfg = {
+				.sec_id = smmu->sec_id,
+				.cbndx = cfg->cbndx,
+			},
+			.iommu_dev	= smmu->dev,
+		};
+		fmt = ARM_MSM_SECURE;
+	} else {
+		ttbr0_pgtbl_info->pgtbl_cfg = (struct io_pgtable_cfg) {
+			.quirks		= quirks,
+			.pgsize_bitmap	= smmu->pgsize_bitmap,
+			.ias		= ias,
+			.oas		= oas,
+			.coherent_walk	= is_iommu_pt_coherent(smmu_domain),
+			.tlb		= &smmu_domain->flush_ops->tlb,
+			.iommu_pgtable_ops = &arm_smmu_pgtable_ops,
+			.iommu_dev	= smmu->dev,
+		};
+	}
 
 	smmu_domain->dev = dev;
 	smmu_domain->pgtbl_ops[0] = alloc_io_pgtable_ops(fmt,
@@ -2506,6 +2568,15 @@ static void arm_smmu_test_smr_masks(struct arm_smmu_device *smmu)
 	if (!smmu->smrs)
 		return;
 
+	/* For slave side secure targets, as we can't write to the
+	 * global space, set the sme mask values to default.
+	 */
+	if (arm_smmu_is_static_cb(smmu)) {
+		smmu->streamid_mask = SID_MASK;
+		smmu->smr_mask_mask = SMR_MASK_MASK;
+		return;
+	}
+
 	/* ID0 */
 	id = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_ID0);
 	size = FIELD_GET(ID0_NUMSMRG, id);
@@ -2698,6 +2769,8 @@ static void arm_smmu_domain_remove_master(struct arm_smmu_domain *smmu_domain,
 	const struct iommu_flush_ops *tlb;
 
 	tlb = smmu_domain->pgtbl_info[0].pgtbl_cfg.tlb;
+	if (!tlb)
+		return;
 
 	mutex_lock(&smmu->stream_map_mutex);
 	for_each_cfg_sme(fwspec, i, idx) {
@@ -2846,7 +2919,10 @@ static void arm_smmu_unprepare_pgtable(void *cookie, void *addr, size_t size)
 	struct arm_smmu_domain *smmu_domain = cookie;
 	struct arm_smmu_pte_info *pte_info;
 
-	if (!arm_smmu_has_secure_vmid(smmu_domain)) {
+	if (smmu_domain->slave_side_secure) {
+		WARN(1, "slave side secure is enforced\n");
+		return;
+	} else if (!arm_smmu_has_secure_vmid(smmu_domain)) {
 		WARN(1, "Invalid VMID is set !!\n");
 		return;
 	}
@@ -2865,7 +2941,10 @@ static int arm_smmu_prepare_pgtable(void *addr, void *cookie)
 	struct arm_smmu_domain *smmu_domain = cookie;
 	struct arm_smmu_pte_info *pte_info;
 
-	if (!arm_smmu_has_secure_vmid(smmu_domain)) {
+	if (smmu_domain->slave_side_secure) {
+		WARN(1, "slave side secure is enforced\n");
+		return -EINVAL;
+	} else if (!arm_smmu_has_secure_vmid(smmu_domain)) {
 		WARN(1, "Invalid VMID is set !!\n");
 		return -EINVAL;
 	}
@@ -4416,6 +4495,9 @@ static int arm_smmu_alloc_cb(struct iommu_domain *domain,
 			cb = smmu->s2crs[idx].cbndx;
 	}
 
+	if (cb >= 0 && arm_smmu_is_static_cb(smmu))
+		smmu_domain->slave_side_secure = true;
+
 	if (cb < 0 && !arm_smmu_is_static_cb(smmu)) {
 		mutex_unlock(&smmu->stream_map_mutex);
 		return __arm_smmu_alloc_cb(smmu, smmu->num_s2_context_banks,
@@ -4424,7 +4506,8 @@ static int arm_smmu_alloc_cb(struct iommu_domain *domain,
 
 	for (i = 0; i < smmu->num_mapping_groups; i++) {
 		if (smmu->s2crs[i].cb_handoff && smmu->s2crs[i].cbndx == cb) {
-			smmu->s2crs[i].cb_handoff = false;
+			if (!arm_smmu_is_static_cb(smmu))
+				smmu->s2crs[i].cb_handoff = false;
 			smmu->s2crs[i].count -= 1;
 		}
 	}
@@ -4620,6 +4703,9 @@ static int arm_smmu_device_cfg_probe(struct arm_smmu_device *smmu)
 	u32 id;
 	bool cttw_reg, cttw_fw = smmu->features & ARM_SMMU_FEAT_COHERENT_WALK;
 	int i;
+
+	if (arm_smmu_restore_sec_cfg(smmu))
+		return -ENODEV;
 
 	dev_dbg(smmu->dev, "probing hardware configuration...\n");
 	dev_dbg(smmu->dev, "SMMUv%d with:\n",
@@ -4844,6 +4930,24 @@ static const struct of_device_id arm_smmu_of_match[] = {
 };
 MODULE_DEVICE_TABLE(of, arm_smmu_of_match);
 
+#ifdef CONFIG_MSM_TZ_SMMU
+int register_iommu_sec_ptbl(void)
+{
+	struct device_node *np;
+
+	for_each_matching_node(np, arm_smmu_of_match)
+		if (of_find_property(np, "qcom,tz-device-id", NULL) &&
+				of_device_is_available(np))
+			break;
+	if (!np)
+		return -ENODEV;
+
+	of_node_put(np);
+
+	return msm_iommu_sec_pgtbl_init();
+}
+#endif
+
 #ifdef CONFIG_ACPI
 static int acpi_smmu_get_data(u32 model, struct arm_smmu_device *smmu)
 {
@@ -5000,7 +5104,9 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	mutex_init(&smmu->idr_mutex);
 
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
-	if (res == NULL) {
+	if (res) {
+		smmu->phys_addr = res->start;
+	} else if (res == NULL) {
 		dev_err(dev, "no MEM resource info\n");
 		return -EINVAL;
 	}
@@ -5059,6 +5165,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	if (err)
 		goto out_exit_power_resources;
 
+	smmu->sec_id = msm_dev_to_device_id(dev);
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		goto out_power_off;
@@ -5327,6 +5434,9 @@ static int __init arm_smmu_init(void)
 		return ret;
 
 	ret = platform_driver_register(&arm_smmu_driver);
+#ifdef CONFIG_MSM_TZ_SMMU
+	ret = register_iommu_sec_ptbl();
+#endif
 	if (ret) {
 		platform_driver_unregister(&qsmmuv500_tbu_driver);
 		return ret;
