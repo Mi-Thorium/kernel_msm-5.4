@@ -21,6 +21,9 @@
 #include <linux/spinlock.h>
 #include <linux/types.h>
 
+#include <soc/qcom/msm_tz_smmu.h>
+#include <soc/qcom/scm.h>
+
 /* Configuration registers */
 #define ARM_SMMU_GR0_sCR0		0x0
 #define sCR0_VMID16EN			BIT(31)
@@ -406,6 +409,8 @@ struct arm_smmu_device {
 	struct idr			asid_idr;
 
 	unsigned long			sync_timed_out;
+
+	enum tz_smmu_device_id		sec_id;
 };
 
 struct qsmmuv500_tbu_device {
@@ -495,6 +500,7 @@ struct arm_smmu_domain {
 	struct iommu_debug_attachment	*logger;
 	struct msm_iommu_domain		domain;
 	bool				defer_flush;
+	bool				slave_side_secure;
 };
 
 
