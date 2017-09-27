@@ -2006,6 +2006,9 @@ static void arm_smmu_domain_get_qcom_quirks(struct arm_smmu_domain *smmu_domain,
 		*quirks |= IO_PGTABLE_QUIRK_QCOM_USE_UPSTREAM_HINT;
 	if (test_bit(DOMAIN_ATTR_USE_LLC_NWA, smmu_domain->attributes))
 		*quirks |= IO_PGTABLE_QUIRK_QCOM_USE_LLC_NWA;
+	if ((*quirks & IO_PGTABLE_QUIRK_QCOM_USE_UPSTREAM_HINT) &&
+		(smmu->model == QCOM_SMMUV500))
+		*quirks |= IO_PGTABLE_QUIRK_QSMMUV500_NON_SHAREABLE;
 }
 
 static int arm_smmu_setup_context_bank(struct arm_smmu_domain *smmu_domain,
