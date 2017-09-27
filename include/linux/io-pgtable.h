@@ -118,6 +118,12 @@ struct io_pgtable_cfg {
 	 *	set in TCR for the page table walker with Write-Back,
 	 *	no Write-Allocate cacheable encoding.
 	 *
+	 * IO_PGTABLE_QUIRK_QSMMUV500_NON_SHAREABLE:
+	 *	Having page tables which are non coherent, but cached in a
+	 *	system cache requires SH=Non-Shareable. This applies to the
+	 *	qsmmuv500 model. For data buffers SH=Non-Shareable is not
+	 *	required.
+	 *
 	 */
 	#define IO_PGTABLE_QUIRK_ARM_NS		BIT(0)
 	#define IO_PGTABLE_QUIRK_NO_PERMS	BIT(1)
@@ -126,6 +132,7 @@ struct io_pgtable_cfg {
 	#define IO_PGTABLE_QUIRK_NON_STRICT	BIT(4)
 	#define IO_PGTABLE_QUIRK_QCOM_USE_UPSTREAM_HINT	BIT(5)
 	#define IO_PGTABLE_QUIRK_QCOM_USE_LLC_NWA	BIT(6)
+	#define IO_PGTABLE_QUIRK_QSMMUV500_NON_SHAREABLE BIT(7)
 	unsigned long			quirks;
 	unsigned long			pgsize_bitmap;
 	unsigned int			ias;
