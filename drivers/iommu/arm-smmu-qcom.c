@@ -92,7 +92,7 @@ static int __qsmmuv2_halt(struct arm_smmu_device *smmu, bool wait)
 	return wait ? qsmmuv2_wait_for_halt(smmu) : 0;
 }
 
-static int qsmmuv2_halt(struct arm_smmu_device *smmu)
+int qsmmuv2_halt(struct arm_smmu_device *smmu)
 {
 	return __qsmmuv2_halt(smmu, true);
 }
@@ -102,7 +102,7 @@ static int qsmmuv2_halt_nowait(struct arm_smmu_device *smmu)
 	return __qsmmuv2_halt(smmu, false);
 }
 
-static void qsmmuv2_resume(struct arm_smmu_device *smmu)
+void qsmmuv2_resume(struct arm_smmu_device *smmu)
 {
 	void __iomem *impl_def1_base = arm_smmu_page(smmu, ARM_SMMU_IMPL_DEF1);
 	u32 val;

@@ -366,6 +366,7 @@ struct arm_smmu_device {
 #define ARM_SMMU_OPT_DISABLE_ATOS	(1 << 4)
 #define ARM_SMMU_OPT_SPLIT_TABLES	(1 << 5)
 #define ARM_SMMU_OPT_STATIC_CB		(1 << 6)
+#define ARM_SMMU_OPT_HALT		(1 << 7)
 	u32				options;
 	enum arm_smmu_arch_version	version;
 	enum arm_smmu_implementation	model;
@@ -404,6 +405,7 @@ struct arm_smmu_device {
 	struct iommu_device		iommu;
 
 	struct arm_smmu_power_resources *pwr;
+	struct notifier_block		regulator_nb;
 
 	/* protects idr */
 	struct mutex			idr_mutex;
