@@ -1603,6 +1603,19 @@ static u32 arm_smmu_tcr(u64 tcr, bool split_tables)
 	return tcr_out;
 }
 
+static bool arm_smmu_master_attached(struct arm_smmu_device *smmu,
+				     struct iommu_fwspec *fwspec)
+{
+	int i, idx;
+
+	for_each_cfg_sme(fwspec, i, idx) {
+		if (smmu->s2crs[idx].attach_count)
+			return true;
+	}
+
+	return false;
+}
+
 static int arm_smmu_set_pt_format(struct arm_smmu_domain *smmu_domain,
 				  struct io_pgtable_cfg *pgtbl_cfg)
 {
@@ -2373,6 +2386,10 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 	strlcpy(smmu_domain->domain.name, dev_name(dev),
 		sizeof(smmu_domain->domain.name));
 	mutex_unlock(&smmu_domain->init_mutex);
+
+	if (arm_smmu_is_slave_side_secure(smmu_domain) &&
+			!arm_smmu_master_attached(smmu, dev->iommu_fwspec))
+		arm_smmu_restore_sec_cfg(smmu, cfg->cbndx);
 
 	return 0;
 
