@@ -2512,6 +2512,11 @@ static void arm_smmu_destroy_domain_context(struct iommu_domain *domain)
 	arm_smmu_unassign_table(smmu_domain);
 	arm_smmu_secure_domain_unlock(smmu_domain);
 	__arm_smmu_free_bitmap(smmu->context_map, cfg->cbndx);
+	/* As the nonsecure context bank index is any way set to zero,
+	 * so, directly clearing up the secure cb bitmap.
+	 */
+	if (arm_smmu_is_slave_side_secure(smmu_domain))
+		__arm_smmu_free_bitmap(smmu->secure_context_map, cfg->cbndx);
 	arm_smmu_power_off(smmu, smmu->pwr);
 	arm_smmu_rpm_put(smmu);
 	arm_smmu_domain_reinit(smmu_domain);
@@ -3824,13 +3829,24 @@ void *get_smmu_from_addr(struct iommu_device *iommu, void __iomem *addr)
 bool arm_smmu_skip_write(void __iomem *addr)
 {
 	struct arm_smmu_device *smmu;
+	int cb;
 
 	smmu = arm_smmu_get_by_addr(addr);
-	if (smmu &&
-	    ((unsigned long)addr & (smmu->numpage - 1)) >= (smmu->numpage >> 1))
-		return false;
-	else
+
+	/* Skip write if smmu not available by now */
+	if (!smmu)
 		return true;
+
+	/* Do not write to global space */
+	if (((unsigned long)addr & (smmu->numpage - 1)) < (smmu->numpage >> 1))
+		return true;
+
+	/* Finally skip writing to secure CB */
+	cb = ((unsigned long)addr & ((smmu->numpage >> 1) - 1)) >> PAGE_SHIFT;
+	if (test_bit(cb, smmu->secure_context_map))
+		return true;
+
+	return false;
 }
 #endif
 
@@ -4657,8 +4673,12 @@ static int arm_smmu_alloc_cb(struct iommu_domain *domain,
 			cb = smmu->s2crs[idx].cbndx;
 	}
 
-	if (cb >= 0 && arm_smmu_is_static_cb(smmu))
+	if (cb >= 0 && arm_smmu_is_static_cb(smmu)) {
 		smmu_domain->slave_side_secure = true;
+
+		if (arm_smmu_is_slave_side_secure(smmu_domain))
+			bitmap_set(smmu->secure_context_map, cb, 1);
+	}
 
 	if (cb < 0 && !arm_smmu_is_static_cb(smmu)) {
 		mutex_unlock(&smmu->stream_map_mutex);
@@ -5437,7 +5457,8 @@ static int arm_smmu_device_remove(struct platform_device *pdev)
 	if (arm_smmu_power_on(smmu->pwr))
 		return -EINVAL;
 
-	if (!bitmap_empty(smmu->context_map, ARM_SMMU_MAX_CBS))
+	if (!bitmap_empty(smmu->context_map, ARM_SMMU_MAX_CBS) ||
+	    !bitmap_empty(smmu->secure_context_map, ARM_SMMU_MAX_CBS))
 		dev_err(&pdev->dev, "removing device with active domains!\n");
 
 	arm_smmu_bus_init(NULL);
