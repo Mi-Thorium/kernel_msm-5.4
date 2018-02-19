@@ -3862,6 +3862,9 @@ bool arm_smmu_skip_write(void __iomem *addr)
 	if (!smmu)
 		return true;
 
+	if (!arm_smmu_is_static_cb(smmu))
+		return false;
+
 	/* Do not write to global space */
 	if (((unsigned long)addr & (smmu->numpage - 1)) < (smmu->numpage >> 1))
 		return true;
@@ -5440,6 +5443,11 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		goto out_exit_power_resources;
 
 	smmu->sec_id = msm_dev_to_device_id(dev);
+	INIT_LIST_HEAD(&smmu->list);
+	spin_lock(&arm_smmu_devices_lock);
+	list_add(&smmu->list, &arm_smmu_devices);
+	spin_unlock(&arm_smmu_devices_lock);
+
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		goto out_power_off;
@@ -5520,11 +5528,6 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		pm_runtime_enable(dev);
 	}
 
-	INIT_LIST_HEAD(&smmu->list);
-	spin_lock(&arm_smmu_devices_lock);
-	list_add(&smmu->list, &arm_smmu_devices);
-	spin_unlock(&arm_smmu_devices_lock);
-
 	/*
 	 * For ACPI and generic DT bindings, an SMMU will be probed before
 	 * any device which might need it, so we want the bus ops in place
@@ -5541,6 +5544,9 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 
 out_power_off:
 	arm_smmu_power_off(smmu, smmu->pwr);
+	spin_lock(&arm_smmu_devices_lock);
+	list_del(&smmu->list);
+	spin_unlock(&arm_smmu_devices_lock);
 
 out_exit_power_resources:
 	arm_smmu_exit_power_resources(smmu->pwr);
