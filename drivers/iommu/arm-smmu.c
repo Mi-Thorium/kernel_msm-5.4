@@ -1209,6 +1209,34 @@ static const struct arm_smmu_flush_ops arm_smmu_s2_tlb_ops_v1 = {
 	.tlb_sync		= arm_smmu_tlb_sync_vmid,
 };
 
+static void msm_smmu_tlb_inv_context_s2(void *cookie) {}
+
+static void msm_smmu_tlb_inv_walk(unsigned long iova, size_t size,
+				  size_t granule, void *cookie) {}
+
+static void msm_smmu_tlb_inv_leaf(unsigned long iova, size_t size,
+				  size_t granule, void *cookie) {}
+
+static void msm_smmu_tlb_add_page(struct iommu_iotlb_gather *gather,
+				  unsigned long iova, size_t granule,
+				  void *cookie) {}
+
+static void msm_smmu_tlb_inv_vmid_nosync(unsigned long iova, size_t size,
+					 size_t granule, bool leaf, void *cookie) {}
+
+static void msm_smmu_tlb_sync_vmid(void *cookie) {}
+
+static const struct arm_smmu_flush_ops msm_smmu_flush_ops = {
+	.tlb = {
+		.tlb_flush_all  = msm_smmu_tlb_inv_context_s2,
+		.tlb_flush_walk = msm_smmu_tlb_inv_walk,
+		.tlb_flush_leaf = msm_smmu_tlb_inv_leaf,
+		.tlb_add_page   = msm_smmu_tlb_add_page,
+	},
+	.tlb_inv_range		= msm_smmu_tlb_inv_vmid_nosync,
+	.tlb_sync		= msm_smmu_tlb_sync_vmid,
+};
+
 static void arm_smmu_deferred_flush(struct arm_smmu_domain *smmu_domain)
 {
 	/*
@@ -2271,6 +2299,9 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 		quirks |= IO_PGTABLE_QUIRK_NON_STRICT;
 	arm_smmu_domain_get_qcom_quirks(smmu_domain, smmu, &quirks);
 
+	if (arm_smmu_is_slave_side_secure(smmu_domain))
+		smmu_domain->flush_ops = &msm_smmu_flush_ops;
+
 	ret = arm_smmu_alloc_cb(domain, smmu, dev);
 	if (ret < 0)
 		goto out_unlock;
@@ -2300,6 +2331,7 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 				.sec_id = smmu->sec_id,
 				.cbndx = cfg->cbndx,
 			},
+			.tlb		= &smmu_domain->flush_ops->tlb,
 			.iommu_dev	= smmu->dev,
 		};
 		fmt = ARM_MSM_SECURE;
@@ -2786,8 +2818,6 @@ static void arm_smmu_domain_remove_master(struct arm_smmu_domain *smmu_domain,
 	const struct iommu_flush_ops *tlb;
 
 	tlb = smmu_domain->pgtbl_info[0].pgtbl_cfg.tlb;
-	if (!tlb)
-		return;
 
 	mutex_lock(&smmu->stream_map_mutex);
 	for_each_cfg_sme(fwspec, i, idx) {
