@@ -69,6 +69,8 @@ struct pll_vco {
 /**
  * struct clk_alpha_pll - phase locked loop (PLL)
  * @offset: base address of registers
+ * @soft_vote: soft voting variable for multiple PLL software instances
+ * @soft_vote_mask: soft voting mask for multiple PLL software instances
  * @vco_table: array of VCO settings
  * @regs: alpha pll register map (see @clk_alpha_pll_regs)
  * @vco_data: array of VCO data settings like post div
@@ -78,6 +80,14 @@ struct clk_alpha_pll {
 	u32 offset;
 	const u8 *regs;
 	struct alpha_pll_config *config;
+
+	u32 *soft_vote;
+	u32 soft_vote_mask;
+	/* Soft voting values */
+#define PLL_SOFT_VOTE_PRIMARY	BIT(0)
+#define PLL_SOFT_VOTE_CPU	BIT(1)
+#define PLL_SOFT_VOTE_AUX	BIT(2)
+
 	const struct pll_vco *vco_table;
 	size_t num_vco;
 
@@ -94,6 +104,8 @@ struct clk_alpha_pll {
 #define SUPPORTS_DYNAMIC_UPDATE	BIT(3)
 #define SUPPORTS_FSM_LEGACY_MODE BIT(4)
 #define SUPPORTS_SLEW           BIT(4)
+	/* Associated with soft_vote for multiple PLL software instances */
+#define SUPPORTS_FSM_VOTE	BIT(5)
 #define BYPASS_LATCH		BIT(6)
 	u8 flags;
 
