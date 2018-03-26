@@ -157,6 +157,7 @@ struct clk_smd_rpm_req {
 
 struct rpm_smd_clk_desc {
 	struct clk_hw **clks;
+	size_t num_rpm_clks;
 	size_t num_clks;
 };
 
@@ -1087,13 +1088,33 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 	hw_clk_handoff = of_property_read_bool(pdev->dev.of_node,
 						"qcom,hw-clk-handoff");
 	if (hw_clk_handoff) {
-		for (i = 0; i < desc->num_clks; i++) {
-			if (!hw_clks[i])
-				continue;
+		if (desc->num_rpm_clks) {
+			for (i = 0; i <= desc->num_rpm_clks; i++) {
+				if (!hw_clks[i])
+					continue;
 
-			ret = clk_smd_rpm_handoff(hw_clks[i]);
-			if (ret)
-				goto err;
+				ret = clk_smd_rpm_handoff(hw_clks[i]);
+				if (ret)
+					goto err;
+			}
+
+			for (i = (desc->num_rpm_clks + 1); i < desc->num_clks; i++) {
+				if (!hw_clks[i])
+					continue;
+
+				ret = voter_clk_handoff(hw_clks[i]);
+				if (ret)
+					goto err;
+			}
+		} else {
+			for (i = 0; i < desc->num_clks; i++) {
+				if (!hw_clks[i])
+					continue;
+
+				ret = clk_smd_rpm_handoff(hw_clks[i]);
+				if (ret)
+					goto err;
+			}
 		}
 	}
 
