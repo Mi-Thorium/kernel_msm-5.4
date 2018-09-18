@@ -1825,6 +1825,9 @@ static int qsmmuv500_cfg_probe(struct arm_smmu_device *smmu)
 
 	data->version = readl_relaxed(data->tcu_base + TCU_HW_VERSION_HLOS1);
 
+	if (arm_smmu_is_static_cb(smmu))
+		return 0;
+
 	val = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_sACR);
 	val &= ~ARM_MMU500_ACR_CACHE_LOCK;
 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_sACR, val);
@@ -1878,12 +1881,15 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 
 	qsmmuv500_tcu_testbus_init(&data->smmu);
 
+	INIT_WORK(&data->outstanding_tnx_work,
+		  qsmmuv500_log_outstanding_transactions);
+
+	if (arm_smmu_is_static_cb(smmu))
+		return &data->smmu;
+
 	ret = qsmmuv500_read_actlr_tbl(data);
 	if (ret)
 		return ERR_PTR(ret);
-
-	INIT_WORK(&data->outstanding_tnx_work,
-		  qsmmuv500_log_outstanding_transactions);
 
 	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
 	if (ret)
