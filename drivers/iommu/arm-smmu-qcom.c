@@ -1878,6 +1878,9 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 
 	qsmmuv500_tcu_testbus_init(&data->smmu);
 
+	if (arm_smmu_is_static_cb(smmu))
+		return 0;
+
 	ret = qsmmuv500_read_actlr_tbl(data);
 	if (ret)
 		return ERR_PTR(ret);
