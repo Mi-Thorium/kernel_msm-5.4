@@ -335,6 +335,11 @@ static int mdss_smmu_attach_v2(struct mdss_data_type *mdata)
 			if (!mdss_smmu->domain_attached &&
 				mdss_smmu_is_valid_domain_condition(mdata,
 					i, true)) {
+				if (mdss_smmu->dma_ops) {
+					set_dma_ops(mdss_smmu->base.dev, mdss_smmu->dma_ops);
+					mdss_smmu->dma_ops = NULL;
+					pr_debug("iommu domain ops restored\n");
+				}
 				rc = iommu_attach_device(
 						mdss_smmu->domain,
 						mdss_smmu->base.dev);
@@ -413,6 +418,11 @@ static int mdss_smmu_detach_v2(struct mdss_data_type *mdata)
 				 */
 				iommu_detach_device(mdss_smmu->domain,
 							mdss_smmu->base.dev);
+				mdss_smmu->dma_ops = get_dma_ops(mdss_smmu->base.dev);
+				if (mdss_smmu->dma_ops) {
+					set_dma_ops(mdss_smmu->base.dev, NULL);
+					pr_debug("iommu domain ops removed\n");
+				}
 				mdss_smmu->domain_attached = false;
 				/*
 				 * since we are leaving clocks on, on

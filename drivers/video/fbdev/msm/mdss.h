@@ -13,6 +13,7 @@
 #include <linux/irqdomain.h>
 #include <linux/mdss_io_util.h>
 #include <linux/mdss_smmu_ext.h>
+#include <linux/dma-mapping.h>
 
 #include <linux/msm-bus.h>
 #include <linux/file.h>
@@ -225,6 +226,7 @@ struct mdss_smmu_client {
 	struct iommu_domain	*domain;
 	struct dss_module_power mp;
 	struct reg_bus_client *reg_bus_clt;
+	const struct dma_map_ops *dma_ops;
 	bool domain_attached;
 	bool domain_reattach;
 	bool handoff_pending;
