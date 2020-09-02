@@ -105,7 +105,7 @@ struct page *__dma_direct_alloc_pages(struct device *dev, size_t size,
 		page = NULL;
 	}
 again:
-	if (!page)
+	if (!page && !(attrs & (DMA_ATTR_NO_KERNEL_MAPPING)))
 		page = alloc_pages_node(node, gfp, get_order(alloc_size));
 	if (page && !dma_coherent_ok(dev, page_to_phys(page), size)) {
 		dma_free_contiguous(dev, page, size);
