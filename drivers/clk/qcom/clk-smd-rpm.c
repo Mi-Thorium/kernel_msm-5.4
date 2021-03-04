@@ -1127,6 +1127,7 @@ static const struct of_device_id rpm_smd_clk_match_table[] = {
 	{ .compatible = "qcom,rpmcc-sdxnightjar", .data = &rpm_clk_sdxnightjar},
 	{ .compatible = "qcom,rpmcc-monaco", .data = &rpm_clk_monaco },
 	{ .compatible = "qcom,rpmcc-qm215",  .data = &rpm_clk_qm215 },
+	{ .compatible = "qcom,rpmcc-sdm439",  .data = &rpm_clk_qm215 },
 	{ }
 };
 MODULE_DEVICE_TABLE(of, rpm_smd_clk_match_table);
@@ -1185,7 +1186,7 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 {
 	struct clk_hw **hw_clks;
 	const struct rpm_smd_clk_desc *desc;
-	int ret, i, is_holi, hw_clk_handoff = false, is_sdxnightjar, is_monaco, is_qm215;
+	int ret, i, is_holi, hw_clk_handoff = false, is_sdxnightjar, is_monaco, is_qm215, is_sdm439;
 
 	desc = of_device_get_match_data(&pdev->dev);
 	if (!desc)
@@ -1199,6 +1200,13 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 						"qcom,rpmcc-monaco");
 	is_qm215 = of_device_is_compatible(pdev->dev.of_node,
 						"qcom,rpmcc-qm215");
+	is_sdm439 = of_device_is_compatible(pdev->dev.of_node,
+						"qcom,rpmcc-sdm439");
+
+	if (is_sdm439) {
+		rpm_clk_qm215.clks[RPM_SMD_BIMC_GPU_CLK] = NULL;
+		rpm_clk_qm215.clks[RPM_SMD_BIMC_GPU_A_CLK] = NULL;
+	}
 
 	if (is_holi || is_sdxnightjar || is_monaco) {
 		ret = clk_vote_bimc(&holi_bimc_clk.hw, INT_MAX);
@@ -1206,7 +1214,7 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 			return ret;
 	}
 
-	if (is_qm215) {
+	if (is_qm215 || is_sdm439) {
 		ret = clk_vote_bimc(&sdm429w_bimc_clk.hw, INT_MAX);
 		if (ret < 0)
 			return ret;
@@ -1306,7 +1314,7 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 		clk_set_rate(sdxnightjar_snoc_a_clk.hw.clk, 19200000);
 	}
 
-	if (is_qm215) {
+	if (is_qm215 || is_sdm439) {
 		clk_prepare_enable(sdm429w_bi_tcxo_ao.hw.clk);
 
 		/*
