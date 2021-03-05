@@ -1386,7 +1386,7 @@ config  QCOM_BUS_CONFIG_RPMH
 	  Clock Manager)
 
 config MSM_TZ_SMMU
-	depends on ARCH_MSM8953 || ARCH_QCS405
+	depends on ARCH_MSM8953 || ARCH_QCS405 || ARCH_MSM8917
 	bool "Helper functions for SMMU configuration through TZ"
 	help
 	  Say 'Y' here for targets that need to call into TZ to configure
