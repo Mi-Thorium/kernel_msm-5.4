@@ -1634,7 +1634,7 @@ static struct clk_rcg2 csi0_clk_src = {
 		.rate_max = (unsigned long[VDD_NUM]) {
 			[VDD_LOW] = 100000000,
 			[VDD_LOW_L1] = 200000000,
-			[VDD_NOMINAL] = 266666667},
+			[VDD_NOMINAL] = 266670000},
 	},
 };
 
@@ -1694,7 +1694,7 @@ static struct clk_rcg2 csi1_clk_src = {
 		.rate_max = (unsigned long[VDD_NUM]) {
 			[VDD_LOW] = 100000000,
 			[VDD_LOW_L1] = 200000000,
-			[VDD_NOMINAL] = 266666667},
+			[VDD_NOMINAL] = 266670000},
 	},
 };
 
@@ -1739,7 +1739,7 @@ static struct clk_rcg2 csi2_clk_src = {
 		.rate_max = (unsigned long[VDD_NUM]) {
 			[VDD_LOW] = 100000000,
 			[VDD_LOW_L1] = 200000000,
-			[VDD_NOMINAL] = 266666667},
+			[VDD_NOMINAL] = 266670000},
 	},
 };
 
