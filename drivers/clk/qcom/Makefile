@@ -71,6 +71,7 @@ obj-$(CONFIG_SC_DEBUGCC_SHRIKE) += debugcc-scshrike.o
 obj-$(CONFIG_SC_GCC_SHRIKE) += gcc-scshrike.o
 obj-$(CONFIG_SDM_CAMCC_845) += camcc-sdm845.o
 obj-$(CONFIG_SDM_DEBUGCC_429W) += debugcc-sdm429w.o
+obj-$(CONFIG_SDM_DEBUGCC_439) += debugcc-sdm439.o
 obj-$(CONFIG_SDM_DISPCC_845) += dispcc-sdm845.o
 obj-$(CONFIG_SDM_GCC_429W) += gcc-sdm429w.o
 obj-$(CONFIG_SDM_GCC_660) += gcc-sdm660.o
