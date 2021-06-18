@@ -8,7 +8,9 @@
 #include <linux/delay.h>
 #include <linux/kernel.h>
 #include <linux/regmap.h>
+#include <linux/clk-provider.h>
 
+#include "clk-debug.h"
 #include "clk-regmap-mux-div.h"
 
 #define CMD_RCGR			0x0
@@ -51,7 +53,8 @@ int mux_div_set_src_div(struct clk_regmap_mux_div *md, u32 src, u32 div)
 		udelay(1);
 	}
 
-	pr_err("%s: RCG did not update its configuration", name);
+	WARN_CLK(&md->clkr.hw, 1,
+			"%s: rcg didn't update its configuration.", name);
 	return -EBUSY;
 }
 EXPORT_SYMBOL_GPL(mux_div_set_src_div);
