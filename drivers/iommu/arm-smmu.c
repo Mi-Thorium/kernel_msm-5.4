@@ -2155,14 +2155,6 @@ static int arm_smmu_setup_context_bank(struct arm_smmu_domain *smmu_domain,
 			cfg->irptndx = cfg->cbndx;
 		}
 
-		/* for slave side secure, we may have to force the pagetable
-		 * format to V8L.
-		 */
-		ret = arm_smmu_set_pt_format(smmu_domain,
-					     &smmu_domain->pgtbl_info[0].pgtbl_cfg);
-		if (ret)
-			return ret;
-
 		/*
 		 * Request context fault interrupt. Do this last to avoid the
 		 * handler seeing a half-initialised domain state.
@@ -2185,7 +2177,8 @@ static int arm_smmu_setup_context_bank(struct arm_smmu_domain *smmu_domain,
 
 static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 					struct arm_smmu_device *smmu,
-					struct device *dev)
+					struct device *dev,
+					bool try_64bit_fmt)
 {
 	int start, ret = 0;
 	unsigned long ias, oas;
@@ -2199,6 +2192,7 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 	unsigned long quirks = 0;
 	struct io_pgtable *iop;
 	bool split_tables = false;
+	bool dynamic = is_dynamic_domain(domain);
 
 	mutex_lock(&smmu_domain->init_mutex);
 	if (smmu_domain->smmu)
@@ -2261,7 +2255,8 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 	if ((IS_ENABLED(CONFIG_64BIT) || cfg->fmt == ARM_SMMU_CTX_FMT_NONE) &&
 	    (smmu->features & (ARM_SMMU_FEAT_FMT_AARCH64_64K |
 			       ARM_SMMU_FEAT_FMT_AARCH64_16K |
-			       ARM_SMMU_FEAT_FMT_AARCH64_4K))) {
+			       ARM_SMMU_FEAT_FMT_AARCH64_4K)) &&
+			       try_64bit_fmt) {
 		cfg->fmt = ARM_SMMU_CTX_FMT_AARCH64;
 		if (smmu_domain->stage == ARM_SMMU_DOMAIN_S1 &&
 		    smmu->options & ARM_SMMU_OPT_SPLIT_TABLES)
@@ -2377,6 +2372,21 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 			.iommu_pgtable_ops = &arm_smmu_pgtable_ops,
 			.iommu_dev	= smmu->dev,
 		};
+	}
+
+	if (!dynamic) {
+		ret = arm_smmu_set_pt_format(smmu_domain,
+				     &smmu_domain->pgtbl_info[0].pgtbl_cfg);
+		if (cfg->fmt == ARM_SMMU_CTX_FMT_AARCH64)
+			dev_info(smmu->dev, "AARCH64 is%s supported for %s\n", ret ? " not" : "", dev_name(dev));
+		if (ret) {
+			ret = arm_smmu_restore_sec_cfg(smmu, cfg->cbndx);
+			if (!ret)
+				/* Restore succeeded, we can try again with AARCH32 */
+				ret = -EAGAIN;
+			smmu_domain->smmu = NULL;
+			goto out_unlock;
+		}
 	}
 
 	smmu_domain->dev = dev;
@@ -3275,9 +3285,15 @@ static int arm_smmu_attach_dev(struct iommu_domain *domain, struct device *dev)
 	}
 
 	/* Ensure that the domain is finalised */
-	ret = arm_smmu_init_domain_context(domain, smmu, dev);
-	if (ret < 0)
-		goto out_power_off;
+	ret = arm_smmu_init_domain_context(domain, smmu, dev, true);
+	if (ret < 0) {
+		if (ret != -EAGAIN)
+			goto out_power_off;
+
+		ret = arm_smmu_init_domain_context(domain, smmu, dev, false);
+		if (ret < 0)
+			goto out_power_off;
+	}
 
 	ret = arm_smmu_domain_get_attr(domain, DOMAIN_ATTR_S1_BYPASS,
 					&s1_bypass);
