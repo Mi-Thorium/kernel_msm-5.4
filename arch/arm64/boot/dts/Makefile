@@ -29,8 +29,10 @@ subdir-y += ti
 subdir-y += xilinx
 subdir-y += zte
 
+ifneq ($(CONFIG_OF_IGNORE_QCOM_VENDOR_DTS),y)
 dtstree	:= $(srctree)/$(src)
 vendor  := $(dtstree)/vendor
 ifneq "$(wildcard $(vendor)/Makefile)" ""
     subdir-y += vendor
+endif
 endif
