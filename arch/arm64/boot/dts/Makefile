@@ -5,6 +5,9 @@ ifneq "$(wildcard $(vendor)/Makefile)" ""
     ifneq ($(CONFIG_OF_IGNORE_QCOM_VENDOR_DTS),y)
         subdir-y += vendor-legacy
     endif
+
+    subdir-y += xiaomi-msm8937
+    subdir-y += xiaomi-sdm439
 else
 subdir-y += actions
 subdir-y += al
