@@ -1,9 +1,9 @@
 # SPDX-License-Identifier: GPL-2.0
 dtstree	:= $(srctree)/$(src)
-vendor  := $(dtstree)/vendor
+vendor  := $(dtstree)/vendor-legacy
 ifneq ($(CONFIG_OF_IGNORE_QCOM_VENDOR_DTS),y)
     ifneq "$(wildcard $(vendor)/Makefile)" ""
-        subdir-y += vendor
+        subdir-y += vendor-legacy
     endif
 endif
 subdir-y += actions
