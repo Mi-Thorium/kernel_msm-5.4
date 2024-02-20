@@ -2574,6 +2574,21 @@ u64 __qcom_scm_read_efuse_row(struct device *dev, u32 row_address, int addr_type
 	return efuse_bits;
 }
 
+int __qcom_scm_dcc_cfg_xpu(struct device *dev, uint64_t xpu_addr, bool enable)
+{
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = QCOM_SCM_DISABLE_XPU,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
+
+	desc.args[0] = xpu_addr;
+	desc.args[1] = enable;
+	desc.arginfo = QCOM_SCM_ARGS(2, QCOM_SCM_VAL, QCOM_SCM_VAL);
+
+	return qcom_scm_call(dev, &desc);
+}
+
 void __qcom_scm_init(void)
 {
 

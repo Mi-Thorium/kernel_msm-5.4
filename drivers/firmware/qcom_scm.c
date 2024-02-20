@@ -1120,6 +1120,12 @@ u64 qcom_scm_read_efuse_row(u32 row_address, int addr_type)
 }
 EXPORT_SYMBOL(qcom_scm_read_efuse_row);
 
+int qcom_scm_dcc_cfg_xpu(uint64_t xpu_addr, bool enable)
+{
+	return __qcom_scm_dcc_cfg_xpu(__scm ? __scm->dev : NULL, xpu_addr, enable);
+}
+EXPORT_SYMBOL(qcom_scm_dcc_cfg_xpu);
+
 /**
  * qcom_scm_is_available() - Checks if SCM is available
  */
