@@ -83,6 +83,10 @@ extern int __qcom_scm_get_feat_version(struct device *dev, u64 feat_id,
 #define QCOM_SCM_TZ_DBG_ETM_FEAT_ID		0x08
 #define QCOM_SCM_MP_CP_FEAT_ID			0x0c
 
+#define QCOM_SCM_SVC_FUSE	0x08
+#define QCOM_SCM_FUSE_READ	0x07
+u64 __qcom_scm_read_efuse_row(struct device *dev, u32 row_address, int addr_type);
+
 #define QCOM_SCM_SVC_PWR			0x09
 #define QCOM_SCM_PWR_IO_DISABLE_PMIC_ARBITER	0x01
 #define QCOM_SCM_PWR_IO_DEASSERT_PS_HOLD	0x02

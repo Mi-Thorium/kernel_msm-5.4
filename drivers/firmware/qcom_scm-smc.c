@@ -2603,6 +2603,32 @@ int __qcom_scm_dcc_cfg_xpu(struct device *dev, uint64_t xpu_addr, bool enable)
 	return qcom_scm_call(dev, &desc);
 }
 
+u64 __qcom_scm_read_efuse_row(struct device *dev, u32 row_address, int addr_type)
+{
+	int ret;
+	u64 efuse_bits = 0;
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_FUSE,
+		.cmd = QCOM_SCM_FUSE_READ,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
+
+	desc.args[0] = row_address;
+	desc.args[1] = addr_type;
+	desc.arginfo = QCOM_SCM_ARGS(2);
+
+	ret = qcom_scm_call(dev, &desc);
+
+	if (ret) {
+		pr_err("%s: read row_address %lu failed, err code = %d",
+			__func__, row_address, ret);
+	} else {
+		efuse_bits = ((u64)(desc.res[1]) << 32) +
+					(u64)desc.res[0];
+	}
+	return efuse_bits;
+}
+
 void __qcom_scm_init(void)
 {
 
