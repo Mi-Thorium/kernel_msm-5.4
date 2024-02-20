@@ -18,7 +18,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
 #include <linux/string.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 
 #define MEM_ACC_DEFAULT_SEL_SIZE	2
 
@@ -110,18 +110,11 @@ static DEFINE_MUTEX(mem_acc_memory_mutex);
 static u64 mem_acc_read_efuse_row(struct mem_acc_regulator *mem_acc_vreg,
 					u32 row_num, bool use_tz_api)
 {
-	int rc;
 	u64 efuse_bits;
-	struct scm_desc desc = {0};
 	struct mem_acc_read_req {
 		u32 row_address;
 		int addr_type;
 	} req;
-
-	struct mem_acc_read_rsp {
-		u32 row_data[2];
-		u32 status;
-	} rsp;
 
 	if (!use_tz_api) {
 		efuse_bits = readq_relaxed(mem_acc_vreg->efuse_base
@@ -129,30 +122,10 @@ static u64 mem_acc_read_efuse_row(struct mem_acc_regulator *mem_acc_vreg,
 		return efuse_bits;
 	}
 
-	desc.args[0] = req.row_address = mem_acc_vreg->efuse_addr +
+	req.row_address = mem_acc_vreg->efuse_addr +
 					row_num * BYTES_PER_FUSE_ROW;
-	desc.args[1] = req.addr_type = 0;
-	desc.arginfo = SCM_ARGS(2);
-	efuse_bits = 0;
-
-	if (!is_scm_armv8()) {
-		rc = scm_call(SCM_SVC_FUSE, SCM_FUSE_READ,
-			&req, sizeof(req), &rsp, sizeof(rsp));
-	} else {
-		rc = scm_call2(SCM_SIP_FNID(SCM_SVC_FUSE, SCM_FUSE_READ),
-				&desc);
-		rsp.row_data[0] = desc.ret[0];
-		rsp.row_data[1] = desc.ret[1];
-		rsp.status = desc.ret[2];
-	}
-
-	if (rc) {
-		pr_err("read row %d failed, err code = %d\n", row_num, rc);
-	} else {
-		efuse_bits = ((u64)(rsp.row_data[1]) << 32) +
-				(u64)rsp.row_data[0];
-	}
-
+	req.addr_type = 0;
+	efuse_bits = qcom_scm_read_efuse_row(req.row_address, req.addr_type);
 	return efuse_bits;
 }
 
@@ -192,11 +165,11 @@ static void __update_acc_type(struct mem_acc_regulator *mem_acc_vreg,
 
 	for (i = 0; i < MEM_ACC_TYPE_MAX; i++) {
 		if (mem_acc_vreg->mem_acc_type_addr[i]) {
-			rc = scm_io_write(mem_acc_vreg->mem_acc_type_addr[i],
+			rc = qcom_scm_io_writel(mem_acc_vreg->mem_acc_type_addr[i],
 				mem_acc_vreg->mem_acc_type_data[corner - 1 + i *
 				mem_acc_vreg->num_corners]);
 			if (rc)
-				pr_err("scm_io_write: %pa failure rc:%d\n",
+				pr_err("qcom_scm_io_writel: %pa failure rc:%d\n",
 					&(mem_acc_vreg->mem_acc_type_addr[i]),
 					rc);
 		}
