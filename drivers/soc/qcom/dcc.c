@@ -17,7 +17,7 @@
 #include <linux/uaccess.h>
 #include <soc/qcom/memory_dump.h>
 #include <soc/qcom/rpm-smd.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 
 #define RPM_MISC_REQ_TYPE	0x6373696d
 #define RPM_MISC_DDR_DCC_ENABLE 0x32726464
@@ -132,15 +132,9 @@ static int dcc_sram_writel(struct dcc_drvdata *drvdata,
 	return 0;
 }
 
-static int dcc_cfg_xpu(struct dcc_drvdata *drvdata, bool enable)
+static inline int dcc_cfg_xpu(struct dcc_drvdata *drvdata, bool enable)
 {
-	struct scm_desc desc = {0};
-
-	desc.args[0] = drvdata->xpu_addr;
-	desc.args[1] = enable;
-	desc.arginfo = SCM_ARGS(2, SCM_VAL, SCM_VAL);
-
-	return scm_call2(SCM_SIP_FNID(SCM_SVC_MP, SCM_SVC_DISABLE_XPU), &desc);
+	return qcom_scm_dcc_cfg_xpu(drvdata->xpu_addr, enable);
 }
 
 static int dcc_xpu_lock(struct dcc_drvdata *drvdata)
@@ -1266,8 +1260,7 @@ static int dcc_probe(struct platform_device *pdev)
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM,
 					   "dcc-xpu-base");
 	if (res) {
-		if (scm_is_call_available(SCM_SVC_MP,
-					  SCM_SVC_DISABLE_XPU) > 0) {
+		if (qcom_scm_is_available()) {
 			drvdata->xpu_scm_avail = true;
 			drvdata->xpu_addr = res->start;
 		} else {
