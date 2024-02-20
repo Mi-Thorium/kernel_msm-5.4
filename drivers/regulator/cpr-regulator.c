@@ -30,7 +30,7 @@
 #include <linux/regulator/machine.h>
 #include <linux/regulator/of_regulator.h>
 #include <linux/regulator/cpr-regulator.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 
 /* Register Offsets for RB-CPR and Bit Definitions */
 
@@ -430,19 +430,12 @@ static u64 cpr_read_remapped_efuse_row(struct cpr_regulator *cpr_vreg,
 static u64 cpr_read_efuse_row(struct cpr_regulator *cpr_vreg, u32 row_num,
 				bool use_tz_api)
 {
-	int rc;
 	u64 efuse_bits;
-	struct scm_desc desc = {0};
 
 	struct cpr_read_req {
 		u32 row_address;
 		int addr_type;
 	} req;
-
-	struct cpr_read_rsp {
-		u32 row_data[2];
-		u32 status;
-	} rsp;
 
 	if (cpr_vreg->remapped_row && row_num >= cpr_vreg->remapped_row_base)
 		return cpr_read_remapped_efuse_row(cpr_vreg, row_num);
@@ -452,25 +445,10 @@ static u64 cpr_read_efuse_row(struct cpr_regulator *cpr_vreg, u32 row_num,
 			+ row_num * BYTES_PER_FUSE_ROW);
 		return efuse_bits;
 	}
-	desc.args[0] = req.row_address = cpr_vreg->efuse_addr +
-					row_num * BYTES_PER_FUSE_ROW;
-	desc.args[1] = req.addr_type = 0;
-	desc.arginfo = SCM_ARGS(2);
-	efuse_bits = 0;
 
-	rc = scm_call2(SCM_SIP_FNID(SCM_SVC_FUSE, SCM_FUSE_READ),
-		&desc);
-	rsp.row_data[0] = desc.ret[0];
-	rsp.row_data[1] = desc.ret[1];
-	rsp.status = desc.ret[2];
-
-	if (rc) {
-		cpr_err(cpr_vreg, "read row %d failed, err code = %d",
-			row_num, rc);
-	} else {
-		efuse_bits = ((u64)(rsp.row_data[1]) << 32) +
-					(u64)rsp.row_data[0];
-	}
+	req.row_address = cpr_vreg->efuse_addr + row_num * BYTES_PER_FUSE_ROW;
+	req.addr_type = 0;
+	efuse_bits = qcom_scm_read_efuse_row(req.row_address, req.addr_type);
 	return efuse_bits;
 }
 
