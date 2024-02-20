@@ -252,6 +252,9 @@ extern int __qcom_scm_qseecom_do(struct device *dev, u32 cmd_id,
 #define QCOM_SCM_TSENS_INIT_ID		0x5
 extern int __qcom_scm_tsens_reinit(struct device *dev, int *tsens_ret);
 
+#define QCOM_SCM_DISABLE_XPU	0x23
+extern int __qcom_scm_dcc_cfg_xpu(struct device *dev, uint64_t xpu_addr, bool enable);
+
 //SMMU Paravirt driver
 #define SMMU_PARAVIRT_OP_ATTACH         0
 #define SMMU_PARAVIRT_OP_DETACH		1
