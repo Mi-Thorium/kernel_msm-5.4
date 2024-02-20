@@ -1114,6 +1114,12 @@ int qcom_scm_ddrbw_profiler(phys_addr_t in_buf,
 }
 EXPORT_SYMBOL(qcom_scm_ddrbw_profiler);
 
+u64 qcom_scm_read_efuse_row(u32 row_address, int addr_type)
+{
+	return __qcom_scm_read_efuse_row(__scm ? __scm->dev : NULL, row_address, addr_type);
+}
+EXPORT_SYMBOL(qcom_scm_read_efuse_row);
+
 /**
  * qcom_scm_is_available() - Checks if SCM is available
  */

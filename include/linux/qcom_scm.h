@@ -282,6 +282,7 @@ extern bool qcom_scm_is_available(void);
 extern int qcom_scm_mem_protect_audio(phys_addr_t paddr, size_t size);
 extern int qcom_scm_ddrbw_profiler(phys_addr_t in_buf, size_t in_buf_size,
 		phys_addr_t out_buf, size_t out_buf_size);
+extern u64 qcom_scm_read_efuse_row(u32 row_address, int addr_type);
 #else
 
 #include <linux/errno.h>
@@ -483,5 +484,6 @@ static inline int qcom_scm_mem_protect_audio(phys_addr_t paddr, size_t size)
 static inline int qcom_scm_ddrbw_profiler(phys_addr_t in_buf, size_t in_buf_size,
 		phys_addr_t out_buf, size_t out_buf_size)
 		{ return -ENODEV; }
+static inline u64 qcom_scm_read_efuse_row(u32 row_address, int addr_type) { return 0; }
 #endif
 #endif
