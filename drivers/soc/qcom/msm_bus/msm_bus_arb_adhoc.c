@@ -169,7 +169,7 @@ static int gen_lnode(struct device *dev,
 		lnode->next = prev_idx;
 		lnode->next_dev = bus_find_device(&msm_bus_type, NULL,
 					(void *) &next_hop,
-					msm_bus_device_match_adhoc);
+					(const void *)msm_bus_device_match_adhoc);
 	}
 
 	memset(lnode->lnode_ib, 0, sizeof(uint64_t) * NUM_CTX);
@@ -220,7 +220,7 @@ static int prune_path(struct list_head *route_list, int dest, int src,
 	int search_dev_id = dest;
 	struct device *dest_dev = bus_find_device(&msm_bus_type, NULL,
 					(void *) &dest,
-					msm_bus_device_match_adhoc);
+					(const void *)msm_bus_device_match_adhoc);
 	int lnode_hop = -1;
 
 	if (!found)
@@ -246,7 +246,7 @@ static int prune_path(struct list_head *route_list, int dest, int src,
 						NULL,
 						(void *)
 						&bus_node->node_info->id,
-						msm_bus_device_match_adhoc);
+						(const void *)msm_bus_device_match_adhoc);
 
 					if (!dest_dev) {
 						lnode_hop = -1;
@@ -608,7 +608,7 @@ static int msm_bus_apply_rules(struct list_head *list, bool after_clk_commit)
 
 		dev = bus_find_device(&msm_bus_type, NULL,
 				(void *) &rule->id,
-				msm_bus_device_match_adhoc);
+				(const void *)msm_bus_device_match_adhoc);
 
 		if (!dev) {
 			MSM_BUS_ERR("Can't find dev node for %d", rule->id);
@@ -794,7 +794,7 @@ static void getpath_debug(int src, int curr, int active_only)
 
 	dev_node = bus_find_device(&msm_bus_type, NULL,
 				(void *) &src,
-				msm_bus_device_match_adhoc);
+				(const void *)msm_bus_device_match_adhoc);
 
 	if (!dev_node) {
 		MSM_BUS_ERR("SRC NOT FOUND %d", src);
@@ -994,7 +994,7 @@ static uint32_t register_client_adhoc(struct msm_bus_scale_pdata *pdata)
 		}
 		dev = bus_find_device(&msm_bus_type, NULL,
 				(void *) &src,
-				msm_bus_device_match_adhoc);
+				(const void *)msm_bus_device_match_adhoc);
 		if (IS_ERR_OR_NULL(dev)) {
 			MSM_BUS_ERR("%s:Failed to find path.src %d dest %d",
 				__func__, src, dest);
@@ -1378,7 +1378,7 @@ register_adhoc(uint32_t mas, uint32_t slv, char *name, bool active_only)
 
 	client->mas_dev = bus_find_device(&msm_bus_type, NULL,
 					(void *) &mas,
-					msm_bus_device_match_adhoc);
+					(const void *)msm_bus_device_match_adhoc);
 	if (IS_ERR_OR_NULL(client->mas_dev)) {
 		MSM_BUS_ERR("%s:Failed to find path.src %d dest %d",
 			__func__, client->mas, client->slv);

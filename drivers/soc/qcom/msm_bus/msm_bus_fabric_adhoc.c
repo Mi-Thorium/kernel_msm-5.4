@@ -1007,7 +1007,7 @@ static int msm_bus_setup_dev_conn(struct device *bus_dev, void *data)
 		struct device *bus_parent_device =
 			bus_find_device(&msm_bus_type, NULL,
 				(void *)&bus_node->node_info->bus_device_id,
-				msm_bus_device_match_adhoc);
+				(const void*)msm_bus_device_match_adhoc);
 
 		if (!bus_parent_device) {
 			MSM_BUS_ERR("%s: Error finding parentdev %d parent %d",
@@ -1028,7 +1028,7 @@ static int msm_bus_setup_dev_conn(struct device *bus_dev, void *data)
 		bus_node->node_info->dev_connections[j] =
 			bus_find_device(&msm_bus_type, NULL,
 				(void *)&bus_node->node_info->connections[j],
-				msm_bus_device_match_adhoc);
+				(const void*)msm_bus_device_match_adhoc);
 
 		if (!bus_node->node_info->dev_connections[j]) {
 			MSM_BUS_ERR("%s: Error finding conn %d for device %d",
@@ -1044,7 +1044,7 @@ static int msm_bus_setup_dev_conn(struct device *bus_dev, void *data)
 			bus_find_device(&msm_bus_type, NULL,
 			(void *)
 			&bus_node->node_info->bl_cons[j],
-				msm_bus_device_match_adhoc);
+				(const void*)msm_bus_device_match_adhoc);
 
 		if (!bus_node->node_info->black_connections[j]) {
 			MSM_BUS_ERR("%s: Error finding conn %d for device %d\n",
