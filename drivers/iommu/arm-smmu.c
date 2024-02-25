@@ -238,14 +238,13 @@ static bool is_dynamic_domain(struct iommu_domain *domain)
 
 static int arm_smmu_restore_sec_cfg(struct arm_smmu_device *smmu, u32 cb)
 {
-	int ret;
 	int scm_ret = 0;
 
 	if (!arm_smmu_is_static_cb(smmu))
 		return 0;
 
-	ret = scm_restore_sec_cfg(smmu->sec_id, cb, &scm_ret);
-	if (ret || scm_ret) {
+	scm_ret = qcom_scm_restore_sec_cfg(smmu->sec_id, cb);
+	if (scm_ret) {
 		pr_err("scm call IOMMU_SECURE_CFG failed\n");
 		return -EINVAL;
 	}
