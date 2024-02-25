@@ -8,11 +8,53 @@
 #include <linux/err.h>
 #include <linux/types.h>
 #include <linux/cpumask.h>
+#include <linux/arm-smccc.h>
 
 #define QCOM_SCM_VERSION(major, minor)	(((major) << 16) | ((minor) & 0xFF))
 #define QCOM_SCM_CPU_PWR_DOWN_L2_ON	0x0
 #define QCOM_SCM_CPU_PWR_DOWN_L2_OFF	0x1
 #define QCOM_SCM_HDCP_MAX_REQ_CNT	5
+
+#define MAX_QCOM_SCM_ARGS 10
+#define MAX_QCOM_SCM_RETS 3
+
+#define QCOM_SCM_ARGS_IMPL(num, a, b, c, d, e, f, g, h, i, j, ...) (\
+			   (((a) & 0x3) << 4) | \
+			   (((b) & 0x3) << 6) | \
+			   (((c) & 0x3) << 8) | \
+			   (((d) & 0x3) << 10) | \
+			   (((e) & 0x3) << 12) | \
+			   (((f) & 0x3) << 14) | \
+			   (((g) & 0x3) << 16) | \
+			   (((h) & 0x3) << 18) | \
+			   (((i) & 0x3) << 20) | \
+			   (((j) & 0x3) << 22) | \
+			   ((num) & 0xf))
+
+#define QCOM_SCM_ARGS(...) QCOM_SCM_ARGS_IMPL(__VA_ARGS__, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+
+#define QCOM_SCM_SVC_BOOT			0x01
+#define QCOM_SCM_SVC_PIL			0x02
+#define QCOM_SCM_SVC_UTIL			0x03
+#define QCOM_SCM_SVC_TZ				0x04
+#define QCOM_SCM_SVC_IO				0x05
+#define QCOM_SCM_SVC_INFO			0x06
+#define QCOM_SCM_SVC_FUSE			0x08
+#define QCOM_SCM_SVC_PWR			0x09
+#define QCOM_SCM_SVC_MP				0x0C
+#define QCOM_SCM_SVC_DCVS			0x0D
+#define QCOM_SCM_SVC_ES				0x10
+#define QCOM_SCM_SVC_HDCP			0x11
+#define QCOM_SCM_SVC_LMH			0x13
+#define QCOM_SCM_SVC_SMMU_PROGRAM	0x15
+#define QCOM_SCM_SVC_QDSS			0x16
+#define QCOM_SCM_SVC_CAMERA			0x18
+#define QCOM_SCM_SVC_TSENS			0x1E
+
+#define QCOM_SCM_SVC_QSEELOG		0x01
+#define QCOM_SCM_SVC_KEYSTORE		0x05
+#define QCOM_SCM_SVC_SMCINVOKE		0x06
+#define QCOM_SCM_SVC_OEM_POWER		0x09
 
 enum qcom_download_mode {
 	QCOM_DOWNLOAD_NODUMP	= 0x00,
@@ -43,6 +85,28 @@ struct qcom_scm_current_perm_info {
 struct qcom_scm_mem_map_info {
 	__le64 mem_addr;
 	__le64 mem_size;
+};
+
+enum qcom_scm_arg_types {
+	QCOM_SCM_VAL,
+	QCOM_SCM_RO,
+	QCOM_SCM_RW,
+	QCOM_SCM_BUFVAL,
+};
+
+/**
+ * struct qcom_scm_desc
+ * @arginfo:	Metadata describing the arguments in args[]
+ * @args:	The array of arguments for the secure syscall
+ * @res:	The values returned by the secure syscall
+ */
+struct qcom_scm_desc {
+	u32 svc;
+	u32 cmd;
+	u32 arginfo;
+	u64 args[MAX_QCOM_SCM_ARGS];
+	u64 res[MAX_QCOM_SCM_RETS];
+	u32 owner;
 };
 
 #define QCOM_SCM_VMID_HLOS       0x3
@@ -80,6 +144,9 @@ static inline void qcom_scm_populate_mem_map_info(
 
 
 #if IS_ENABLED(CONFIG_QCOM_SCM)
+extern int scm_call2(struct qcom_scm_desc *desc);
+extern int scm_call2_atomic(struct qcom_scm_desc *desc);
+extern int scm_call2_noretry(struct qcom_scm_desc *desc);
 extern int qcom_scm_set_cold_boot_addr(void *entry, const cpumask_t *cpus);
 extern int qcom_scm_set_warm_boot_addr(void *entry, const cpumask_t *cpus);
 extern int qcom_scm_set_warm_boot_addr_mc(void *entry, u32 aff0, u32 aff1, u32 aff2, u32 flags);
@@ -221,6 +288,9 @@ extern u64 qcom_scm_read_efuse_row(u32 row_address, int addr_type);
 
 #include <linux/errno.h>
 
+static inline int scm_call2(struct qcom_scm_desc *desc) { return -ENODEV; }
+static inline int scm_call2_atomic(struct qcom_scm_desc *desc) { return -ENODEV; }
+static inline int scm_call2_noretry(struct qcom_scm_desc *desc) { return -ENODEV; }
 static inline
 int qcom_scm_set_cold_boot_addr(void *entry, const cpumask_t *cpus)
 		{ return -ENODEV; }
