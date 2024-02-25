@@ -78,10 +78,10 @@ static int __qsmmuv2_halt(struct arm_smmu_device *smmu, bool wait)
 		phys_addr_t impl_def1_base_phys = impl_def1_base - smmu->base +
 							smmu->phys_addr;
 
-		if (scm_io_write(impl_def1_base_phys +
+		if (qcom_scm_io_writel(impl_def1_base_phys +
 					IMPL_DEF1_MICRO_MMU_CTRL, val)) {
 			dev_err(smmu->dev,
-				"scm_io_write fail. SMMU might not be halted");
+				"qcom_scm_io_writel fail. SMMU might not be halted");
 			return -EINVAL;
 		}
 	} else {
@@ -115,10 +115,10 @@ void qsmmuv2_resume(struct arm_smmu_device *smmu)
 		phys_addr_t impl_def1_base_phys = impl_def1_base - smmu->base +
 							smmu->phys_addr;
 
-		if (scm_io_write(impl_def1_base_phys +
+		if (qcom_scm_io_writel(impl_def1_base_phys +
 				IMPL_DEF1_MICRO_MMU_CTRL, val))
 			dev_err(smmu->dev,
-				"scm_io_write fail. SMMU might not be resumed");
+				"qcom_scm_io_writel fail. SMMU might not be resumed");
 	} else {
 		arm_smmu_writel(smmu, ARM_SMMU_IMPL_DEF1, IMPL_DEF1_MICRO_MMU_CTRL,
 				val);
