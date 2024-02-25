@@ -13,7 +13,7 @@
 #include <linux/kernel.h>
 #include <linux/device.h>
 #include <linux/of.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include <soc/qcom/msm_tz_smmu.h>
 
 static const char * const device_id_mappings[] = {
@@ -76,7 +76,11 @@ enum tz_smmu_device_id msm_dev_to_device_id(struct device *dev)
 static int __msm_tz_smmu_atos(struct device *dev, int cb_num, int operation)
 {
 	int ret;
-	struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = TZ_SMMU_PREPARE_ATOS_ID,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 	enum tz_smmu_device_id devid = msm_dev_to_device_id(dev);
 
 	if (devid == TZ_DEVICE_MAX)
@@ -85,10 +89,9 @@ static int __msm_tz_smmu_atos(struct device *dev, int cb_num, int operation)
 	desc.args[0] = devid;
 	desc.args[1] = cb_num;
 	desc.args[2] = operation;
-	desc.arginfo = SCM_ARGS(3, SCM_VAL, SCM_VAL, SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL);
 
-	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP, TZ_SMMU_PREPARE_ATOS_ID),
-			&desc);
+	ret = scm_call2(&desc);
 	if (ret)
 		pr_info("%s: TZ SMMU ATOS %s failed, ret = %d\n",
 			__func__,
@@ -109,16 +112,19 @@ int msm_tz_smmu_atos_end(struct device *dev, int cb_num)
 
 int msm_tz_set_cb_format(enum tz_smmu_device_id sec_id, int cbndx)
 {
-	struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_SMMU_PROGRAM,
+		.cmd = SMMU_CHANGE_PAGETABLE_FORMAT,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 	int ret = 0;
 
 	desc.args[0] = sec_id;
 	desc.args[1] = cbndx;
 	desc.args[2] = 1;	/* Enable */
-	desc.arginfo = SCM_ARGS(3, SCM_VAL, SCM_VAL, SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL);
 
-	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_SMMU_PROGRAM,
-			SMMU_CHANGE_PAGETABLE_FORMAT), &desc);
+	ret = scm_call2(&desc);
 
 	if (ret) {
 		WARN(1, "Format change failed for CB %d with ret %d\n",
