@@ -71,6 +71,24 @@ static void qcom_scm_clk_disable(void)
 	clk_disable_unprepare(__scm->bus_clk);
 }
 
+int scm_call2(struct qcom_scm_desc *desc)
+{
+	return qcom_scm_call(__scm ? __scm->dev : NULL, desc);
+}
+EXPORT_SYMBOL(scm_call2);
+
+int scm_call2_atomic(struct qcom_scm_desc *desc)
+{
+	return qcom_scm_call_atomic(__scm ? __scm->dev : NULL, desc);
+}
+EXPORT_SYMBOL(scm_call2_atomic);
+
+int scm_call2_noretry(struct qcom_scm_desc *desc)
+{
+	return qcom_scm_call_noretry(__scm ? __scm->dev : NULL, desc);
+}
+EXPORT_SYMBOL(scm_call2_noretry);
+
 /**
  * qcom_scm_set_cold_boot_addr() - Set the cold boot address for cpus
  * @entry: Entry point function for the cpus
