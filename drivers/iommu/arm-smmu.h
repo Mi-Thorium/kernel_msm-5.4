@@ -22,7 +22,7 @@
 #include <linux/types.h>
 
 #include <soc/qcom/msm_tz_smmu.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 
 /* Configuration registers */
 #define ARM_SMMU_GR0_sCR0		0x0
