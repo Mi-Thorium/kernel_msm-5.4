@@ -18,7 +18,7 @@
 #include <linux/sizes.h>
 #include <linux/slab.h>
 #include <linux/types.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include <linux/dma-mapping.h>
 #include <asm/cacheflush.h>
 
@@ -55,19 +55,24 @@ int msm_iommu_sec_pgtbl_init(void)
 	dma_addr_t paddr;
 	unsigned long attrs = 0;
 
-	if (is_scm_armv8()) {
-		struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = IOMMU_SECURE_PTBL_SIZE,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 
-		desc.args[0] = spare;
-		desc.arginfo = SCM_ARGS(1);
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				IOMMU_SECURE_PTBL_SIZE), &desc);
-		psize[0] = desc.ret[0];
-		psize[1] = desc.ret[1];
-		if (ret || psize[1]) {
-			pr_err("scm call IOMMU_SECURE_PTBL_SIZE failed\n");
-			return ret;
-		}
+	desc.args[0] = spare;
+	desc.arginfo = QCOM_SCM_ARGS(1);
+	/*
+	 * We don't migrate to qcom_scm_iommu_secure_ptbl_size()
+	 * because it doesn't provide both response values
+	 */
+	ret = scm_call2(&desc);
+	psize[0] = desc.res[0];
+	psize[1] = desc.res[1];
+	if (ret || psize[1]) {
+		pr_err("scm call IOMMU_SECURE_PTBL_SIZE failed\n");
+		return ret;
 	}
 
 	/* Now allocate memory for the secure page tables */
@@ -81,27 +86,24 @@ int msm_iommu_sec_pgtbl_init(void)
 		return -ENOMEM;
 	}
 
-	if (is_scm_armv8()) {
-		struct scm_desc desc = {0};
+	desc.cmd = IOMMU_SECURE_PTBL_INIT;
 
-		desc.args[0] = paddr;
-		desc.args[1] = psize[0];
-		desc.args[2] = 0;
-		desc.arginfo = SCM_ARGS(3, SCM_RW, SCM_VAL, SCM_VAL);
+	desc.args[0] = paddr;
+	desc.args[1] = psize[0];
+	desc.args[2] = 0;
+	desc.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_RW, QCOM_SCM_VAL, QCOM_SCM_VAL);
 
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				IOMMU_SECURE_PTBL_INIT), &desc);
-		ptbl_ret = desc.ret[0];
+	ret = scm_call2(&desc);
+	ptbl_ret = desc.res[0];
 
-		if (ret) {
-			pr_err("scm call IOMMU_SECURE_PTBL_INIT failed\n");
-			return ret;
-		}
+	if (ret) {
+		pr_err("scm call IOMMU_SECURE_PTBL_INIT failed\n");
+		return ret;
+	}
 
-		if (ptbl_ret) {
-			pr_err("scm call IOMMU_SECURE_PTBL_INIT extended ret fail\n");
-			return ret;
-		}
+	if (ptbl_ret) {
+		pr_err("scm call IOMMU_SECURE_PTBL_INIT extended ret fail\n");
+		return ret;
 	}
 
 	return 0;
@@ -114,9 +116,13 @@ static int msm_secure_map(struct io_pgtable_ops *ops, unsigned long iova,
 	struct msm_secure_io_pgtable *data = io_pgtable_ops_to_data(ops);
 	struct io_pgtable_cfg *cfg = &data->iop.cfg;
 	void *flush_va, *flush_va_end;
-	struct scm_desc desc = {0};
 	int ret = -EINVAL;
 	u32 resp;
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = IOMMU_SECURE_MAP2_FLAT,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 
 	if (!IS_ALIGNED(iova, SZ_1M) || !IS_ALIGNED(paddr, SZ_1M) ||
 			!IS_ALIGNED(size, SZ_1M))
@@ -141,14 +147,12 @@ static int msm_secure_map(struct io_pgtable_ops *ops, unsigned long iova,
 	 */
 	dmac_clean_range(flush_va, flush_va_end);
 
-	desc.arginfo = SCM_ARGS(8, SCM_RW, SCM_VAL, SCM_VAL, SCM_VAL, SCM_VAL,
-				SCM_VAL, SCM_VAL, SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(8, QCOM_SCM_RW, QCOM_SCM_VAL,
+				QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL,
+				QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL);
 
-	if (is_scm_armv8()) {
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				IOMMU_SECURE_MAP2_FLAT), &desc);
-		resp = desc.ret[0];
-	}
+	ret = scm_call2(&desc);
+	resp = desc.res[0];
 	mutex_unlock(&data->pgtbl_lock);
 
 	if (ret || resp)
@@ -184,9 +188,13 @@ static int msm_secure_map_sg(struct io_pgtable_ops *ops, unsigned long iova,
 	dma_addr_t pa;
 	void *flush_va, *flush_va_end;
 	unsigned long len = 0;
-	struct scm_desc desc = {0};
 	int i;
 	u32 resp;
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = IOMMU_SECURE_MAP2_FLAT,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 
 	for_each_sg(sg, tmp, nents, i)
 		len += tmp->length;
@@ -253,8 +261,9 @@ static int msm_secure_map_sg(struct io_pgtable_ops *ops, unsigned long iova,
 	desc.args[6] = len;
 	desc.args[7] = 0;
 
-	desc.arginfo = SCM_ARGS(8, SCM_RW, SCM_VAL, SCM_VAL, SCM_VAL, SCM_VAL,
-			SCM_VAL, SCM_VAL, SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(8, QCOM_SCM_RW, QCOM_SCM_VAL,
+			QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL,
+			QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL);
 
 	/*
 	 * Ensure that the buffer is in RAM by the time it gets to TZ
@@ -266,16 +275,14 @@ static int msm_secure_map_sg(struct io_pgtable_ops *ops, unsigned long iova,
 	mutex_lock(&data->pgtbl_lock);
 	dmac_clean_range(flush_va, flush_va_end);
 
-	if (is_scm_armv8()) {
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				IOMMU_SECURE_MAP2_FLAT), &desc);
-		resp = desc.ret[0];
+	ret = scm_call2(&desc);
+	resp = desc.res[0];
 
-		if (ret || resp)
-			ret = -EINVAL;
-		else
-			ret = len;
-	}
+	if (ret || resp)
+		ret = -EINVAL;
+	else
+		ret = len;
+
 	mutex_unlock(&data->pgtbl_lock);
 
 	kfree(pa_list);
@@ -288,7 +295,11 @@ static size_t msm_secure_unmap(struct io_pgtable_ops *ops, unsigned long iova,
 	struct msm_secure_io_pgtable *data = io_pgtable_ops_to_data(ops);
 	struct io_pgtable_cfg *cfg = &data->iop.cfg;
 	int ret = -EINVAL;
-	struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = IOMMU_SECURE_UNMAP2_FLAT,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 
 	if (!IS_ALIGNED(iova, SZ_1M) || !IS_ALIGNED(len, SZ_1M))
 		return ret;
@@ -298,16 +309,15 @@ static size_t msm_secure_unmap(struct io_pgtable_ops *ops, unsigned long iova,
 	desc.args[2] = iova;
 	desc.args[3] = len;
 	desc.args[4] = IOMMU_TLBINVAL_FLAG;
-	desc.arginfo = SCM_ARGS(5);
+	desc.arginfo = QCOM_SCM_ARGS(5);
 
 	mutex_lock(&data->pgtbl_lock);
-	if (is_scm_armv8()) {
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				IOMMU_SECURE_UNMAP2_FLAT), &desc);
 
-		if (!ret)
-			ret = len;
-	}
+	ret = scm_call2(&desc);
+
+	if (!ret)
+		ret = len;
+
 	mutex_unlock(&data->pgtbl_lock);
 	return ret;
 }
