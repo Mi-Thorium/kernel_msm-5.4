@@ -1068,8 +1068,7 @@ static struct clk_hw *qm215_clks[] = {
 	[RPM_SMD_BIMC_GPU_CLK] = &qcs404_bimc_gpu_clk.hw,
 	[RPM_SMD_BIMC_GPU_A_CLK] = &qcs404_bimc_gpu_a_clk.hw,
 	[RPM_SMD_SYSMMNOC_CLK] = &sdm429w_sysmmnoc_clk.hw,
-	[RPM_SMD_SYSMMNOC_A_CLK] = &sdm429w_sysmmnoc_a_clk.hw, // num_rpm_clks
-
+	[RPM_SMD_SYSMMNOC_A_CLK] = &sdm429w_sysmmnoc_a_clk.hw,
 	[RPM_SMD_BB_CLK1] = &sdm429w_bb_clk1.hw,
 	[RPM_SMD_BB_CLK1_A] = &sdm429w_bb_clk1_a.hw,
 	[RPM_SMD_BB_CLK2] = &sdm429w_bb_clk2.hw,
@@ -1081,7 +1080,7 @@ static struct clk_hw *qm215_clks[] = {
 	[RPM_SMD_RF_CLK2] = &sdm429w_rf_clk2.hw,
 	[RPM_SMD_RF_CLK2_A] = &sdm429w_rf_clk2_a.hw,
 	[RPM_SMD_DIV_CLK2] = &sdm429w_div_clk2.hw,
-	[RPM_SMD_DIV_A_CLK2] = &sdm429w_div_clk2_a.hw,
+	[RPM_SMD_DIV_A_CLK2] = &sdm429w_div_clk2_a.hw, // num_rpm_clks
 
 	/* Voter clocks */
 	[PNOC_MSMBUS_CLK] = &pnoc_msmbus_clk.hw,
@@ -1113,7 +1112,7 @@ static struct clk_hw *qm215_clks[] = {
 
 static const struct rpm_smd_clk_desc rpm_clk_qm215 = {
 	.clks = qm215_clks,
-	.num_rpm_clks = RPM_SMD_SYSMMNOC_A_CLK,
+	.num_rpm_clks = RPM_SMD_DIV_A_CLK2,
 	.num_clks = ARRAY_SIZE(qm215_clks),
 };
 
