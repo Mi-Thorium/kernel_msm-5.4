@@ -4239,8 +4239,8 @@ static const struct qcom_cc_desc gcc_sdm429w_desc = {
 	.config = &gcc_sdm429w_regmap_config,
 	.clks = gcc_sdm429w_clocks,
 	.num_clks = ARRAY_SIZE(gcc_sdm429w_clocks),
-	.hwclks = gcc_sdm429w_hws,
-	.num_hwclks = ARRAY_SIZE(gcc_sdm429w_hws),
+	.clk_hws = gcc_sdm429w_hws,
+	.num_clk_hws = ARRAY_SIZE(gcc_sdm429w_hws),
 	.resets = gcc_sdm429w_resets,
 	.num_resets = ARRAY_SIZE(gcc_sdm429w_resets),
 };
@@ -4498,8 +4498,8 @@ static const struct qcom_cc_desc mdss_sdm429w_desc = {
 	.config = &gcc_sdm429w_regmap_config,
 	.clks = mdss_sdm429w_clocks,
 	.num_clks = ARRAY_SIZE(mdss_sdm429w_clocks),
-	.hwclks = mdss_sdm429w_hws,
-	.num_hwclks = ARRAY_SIZE(mdss_sdm429w_hws),
+	.clk_hws = mdss_sdm429w_hws,
+	.num_clk_hws = ARRAY_SIZE(mdss_sdm429w_hws),
 };
 
 static const struct of_device_id mdss_sdm429w_match_table[] = {
