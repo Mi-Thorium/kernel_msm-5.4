@@ -34,6 +34,6 @@ subdir-y += sprd
 subdir-y += synaptics
 subdir-y += ti
 subdir-y += xiaomi-msm8937
-subdir-y += xiaomi-sdm439
+#subdir-y += xiaomi-sdm439
 subdir-y += xilinx
 subdir-y += zte
