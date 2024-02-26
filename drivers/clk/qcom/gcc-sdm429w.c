@@ -457,6 +457,8 @@ static struct clk_alpha_pll gpll3_out_main = {
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_slew_ops,
+		},
+		.vdd_data = {
 			.vdd_class = &vdd_cx,
 			.num_rate_max = VDD_NUM,
 			.rate_max = (unsigned long[VDD_NUM]) {
@@ -477,6 +479,8 @@ static struct clk_alpha_pll gpll4_out_main = {
 			.parent_names = (const char *[]){ "bi_tcxo" },
 			.num_parents = 1,
 			.ops = &clk_alpha_pll_ops,
+		},
+		.vdd_data = {
 			.vdd_class = &vdd_cx,
 			.num_rate_max = VDD_NUM,
 			.rate_max = (unsigned long[VDD_NUM]) {
@@ -564,6 +568,8 @@ static struct clk_rcg2 blsp1_qup1_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -594,6 +600,8 @@ static struct clk_rcg2 blsp1_qup1_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -614,6 +622,8 @@ static struct clk_rcg2 blsp1_qup2_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -633,6 +643,8 @@ static struct clk_rcg2 blsp1_qup2_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -653,6 +665,8 @@ static struct clk_rcg2 blsp1_qup3_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -672,6 +686,8 @@ static struct clk_rcg2 blsp1_qup3_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -692,6 +708,8 @@ static struct clk_rcg2 blsp1_qup4_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -711,6 +729,8 @@ static struct clk_rcg2 blsp1_qup4_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -750,6 +770,8 @@ static struct clk_rcg2 blsp1_uart1_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -770,6 +792,8 @@ static struct clk_rcg2 blsp1_uart2_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -790,6 +814,8 @@ static struct clk_rcg2 blsp2_qup1_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -809,6 +835,8 @@ static struct clk_rcg2 blsp2_qup1_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -829,6 +857,8 @@ static struct clk_rcg2 blsp2_qup2_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -848,6 +878,8 @@ static struct clk_rcg2 blsp2_qup2_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -868,6 +900,8 @@ static struct clk_rcg2 blsp2_qup3_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -887,6 +921,8 @@ static struct clk_rcg2 blsp2_qup3_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -907,6 +943,8 @@ static struct clk_rcg2 blsp2_qup4_i2c_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -926,6 +964,8 @@ static struct clk_rcg2 blsp2_qup4_spi_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -946,6 +986,8 @@ static struct clk_rcg2 blsp2_uart1_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -966,6 +1008,8 @@ static struct clk_rcg2 blsp2_uart2_apps_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1006,6 +1050,8 @@ static struct clk_rcg2 cpp_clk_src = {
 		.parent_names = gcc_parent_names_10,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1037,6 +1083,8 @@ static struct clk_rcg2 crypto_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1062,6 +1110,8 @@ static struct clk_rcg2 gp1_clk_src = {
 		.parent_names = gcc_parent_names_3,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1082,6 +1132,8 @@ static struct clk_rcg2 gp2_clk_src = {
 		.parent_names = gcc_parent_names_3,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1102,6 +1154,8 @@ static struct clk_rcg2 gp3_clk_src = {
 		.parent_names = gcc_parent_names_3,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1131,6 +1185,8 @@ static struct clk_rcg2 jpeg0_clk_src = {
 		.parent_names = gcc_parent_names_1,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1159,6 +1215,8 @@ static struct clk_rcg2 pdm2_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1191,6 +1249,8 @@ static struct clk_rcg2 sdcc1_apps_clk_src = {
 		.parent_names = gcc_parent_names_18,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1217,6 +1277,8 @@ static struct clk_rcg2 sdcc1_ice_core_clk_src = {
 		.parent_names = gcc_parent_names_1,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1249,6 +1311,8 @@ static struct clk_rcg2 sdcc2_apps_clk_src = {
 		.parent_names = gcc_parent_names_19,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1285,6 +1349,8 @@ static struct clk_rcg2 usb_hs_system_clk_src = {
 		.parent_names = gcc_parent_names_1,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1339,6 +1405,8 @@ static struct clk_rcg2 vfe0_clk_src = {
 		.parent_names = gcc_parent_names_7,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1361,6 +1429,8 @@ static struct clk_rcg2 vfe1_clk_src = {
 		.parent_names = gcc_parent_names_7,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1382,6 +1452,8 @@ static struct clk_rcg2 byte0_clk_src = {
 		.num_parents = 5,
 		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		.ops = &clk_byte2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1401,6 +1473,8 @@ static struct clk_rcg2 byte1_clk_src = {
 		.num_parents = 5,
 		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		.ops = &clk_byte2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1428,6 +1502,8 @@ static struct clk_rcg2 camss_gp0_clk_src = {
 		.parent_names = gcc_parent_names_20,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1449,6 +1525,8 @@ static struct clk_rcg2 camss_gp1_clk_src = {
 		.parent_names = gcc_parent_names_20,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1477,6 +1555,8 @@ static struct clk_rcg2 camss_top_ahb_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1504,6 +1584,8 @@ static struct clk_rcg2 cci_clk_src = {
 		.parent_names = gcc_parent_names_6,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1531,6 +1613,8 @@ static struct clk_rcg2 csi0_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1567,6 +1651,8 @@ static struct clk_rcg2 csi0phytimer_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1587,6 +1673,8 @@ static struct clk_rcg2 csi1_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1608,6 +1696,8 @@ static struct clk_rcg2 csi1phytimer_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1628,6 +1718,8 @@ static struct clk_rcg2 csi2_clk_src = {
 		.parent_names = gcc_parent_names_0,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1649,6 +1741,8 @@ static struct clk_rcg2 esc0_clk_src = {
 		.parent_names = gcc_parent_names_11,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1668,6 +1762,8 @@ static struct clk_rcg2 esc1_clk_src = {
 		.parent_names = gcc_parent_names_12,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1687,6 +1783,8 @@ static struct clk_rcg2 gcc_xo_clk_src = {
 		.parent_names = gcc_parent_names_2,
 		.num_parents = 1,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1765,6 +1863,8 @@ static struct clk_rcg2 mclk0_clk_src = {
 		.parent_names = gcc_parent_names_4,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1784,6 +1884,8 @@ static struct clk_rcg2 mclk1_clk_src = {
 		.parent_names = gcc_parent_names_4,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1803,6 +1905,8 @@ static struct clk_rcg2 mclk2_clk_src = {
 		.parent_names = gcc_parent_names_4,
 		.num_parents = 5,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1835,6 +1939,8 @@ static struct clk_rcg2 mdp_clk_src = {
 		.parent_names = gcc_parent_names_15,
 		.num_parents = 6,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1855,6 +1961,8 @@ static struct clk_rcg2 pclk0_clk_src = {
 		.num_parents = 5,
 		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		.ops = &clk_pixel_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1874,6 +1982,8 @@ static struct clk_rcg2 pclk1_clk_src = {
 		.num_parents = 5,
 		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 		.ops = &clk_pixel_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1913,6 +2023,8 @@ static struct clk_rcg2 vcodec0_clk_src = {
 		.parent_names = gcc_parent_names_5,
 		.num_parents = 4,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -1936,6 +2048,8 @@ static struct clk_rcg2 vsync_clk_src = {
 		.parent_names = gcc_parent_names_6,
 		.num_parents = 3,
 		.ops = &clk_rcg2_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_cx,
 		.num_rate_max = VDD_NUM,
 		.rate_max = (unsigned long[VDD_NUM]) {
@@ -3675,6 +3789,8 @@ static struct clk_branch gcc_oxili_aon_clk = {
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_branch2_ops,
+		},
+		.vdd_data = {
 			.vdd_class = &vdd_cx,
 			.num_rate_max = VDD_NUM,
 			.rate_max = (unsigned long[VDD_NUM]) {
@@ -3701,6 +3817,8 @@ static struct clk_branch gcc_oxili_gfx3d_clk = {
 			.num_parents = 1,
 			.flags = CLK_SET_RATE_PARENT,
 			.ops = &clk_branch2_ops,
+		},
+		.vdd_data = {
 			.vdd_class = &vdd_cx,
 			.num_rate_max = VDD_NUM,
 			.rate_max = (unsigned long[VDD_NUM]) {
@@ -4161,6 +4279,9 @@ static struct clk_init_data vcodec0_clk_src_init = {
 	.parent_names = gcc_parent_names_7,
 	.num_parents = 5,
 	.ops = &clk_rcg2_ops,
+};
+
+static struct clk_vdd_class_data vcodec0_clk_src_vdd = {
 	.vdd_class = &vdd_cx,
 	.num_rate_max = VDD_NUM,
 	.rate_max = (unsigned long[VDD_NUM]) {
@@ -4177,77 +4298,78 @@ static void fixup_for_qm215(struct platform_device *pdev,
 	gpll3_config.l = 0x30;
 	gpll3_config.alpha_hi = 0x70;
 
-	vfe0_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 160000000;
-	vfe0_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] = 266670000;
-	vfe0_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 320000000;
-	vfe0_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL_L1] = 329140000;
-	vfe0_clk_src.clkr.hw.init->rate_max[VDD_HIGH] = 360000000;
+	vfe0_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 160000000;
+	vfe0_clk_src.clkr.vdd_data.rate_max[VDD_LOW_L1] = 266670000;
+	vfe0_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 320000000;
+	vfe0_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL_L1] = 329140000;
+	vfe0_clk_src.clkr.vdd_data.rate_max[VDD_HIGH] = 360000000;
 	vfe0_clk_src.freq_tbl = ftbl_vfe0_clk_src_qm215;
 
-	vfe1_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 160000000;
-	vfe1_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] = 266670000;
-	vfe1_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 320000000;
-	vfe1_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL_L1] = 329140000;
-	vfe1_clk_src.clkr.hw.init->rate_max[VDD_HIGH] = 360000000;
+	vfe1_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 160000000;
+	vfe1_clk_src.clkr.vdd_data.rate_max[VDD_LOW_L1] = 266670000;
+	vfe1_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 320000000;
+	vfe1_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL_L1] = 329140000;
+	vfe1_clk_src.clkr.vdd_data.rate_max[VDD_HIGH] = 360000000;
 	vfe1_clk_src.freq_tbl = ftbl_vfe0_clk_src_qm215;
 
-	cpp_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 160000000;
-	cpp_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] = 266670000;
-	cpp_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 320000000;
-	cpp_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL_L1] = 360000000;
-	cpp_clk_src.clkr.hw.init->rate_max[VDD_HIGH] = 0;
+	cpp_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 160000000;
+	cpp_clk_src.clkr.vdd_data.rate_max[VDD_LOW_L1] = 266670000;
+	cpp_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 320000000;
+	cpp_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL_L1] = 360000000;
+	cpp_clk_src.clkr.vdd_data.rate_max[VDD_HIGH] = 0;
 	cpp_clk_src.freq_tbl = ftbl_cpp_clk_src_qm215;
 
 	vcodec0_clk_src.freq_tbl = ftbl_vcodec0_clk_src_qm215;
 	vcodec0_clk_src.parent_map = gcc_parent_map_7;
 	vcodec0_clk_src.clkr.hw.init = &vcodec0_clk_src_init;
+	vcodec0_clk_src.clkr.vdd_data = vcodec0_clk_src_vdd;
 
 	gfx3d_clk_src.parent_map = gcc_parent_map_14_gfx3d;
 	gfx3d_clk_src.freq_tbl = ftbl_oxili_gfx3d_clk_src_qm215;
 
 	if (speed_bin) {
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_LOW] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_LOW] =
 			270000000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_LOW_L1] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_LOW_L1] =
 			400000000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_NOMINAL] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_NOMINAL] =
 			484800000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_NOMINAL_L1] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_NOMINAL_L1] =
 			523200000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_HIGH] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_HIGH] =
 			650000000;
 	} else {
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_LOW] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_LOW] =
 			270000000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_LOW_L1] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_LOW_L1] =
 			400000000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_NOMINAL] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_NOMINAL] =
 			484800000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_NOMINAL_L1] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_NOMINAL_L1] =
 			523200000;
-		gcc_oxili_gfx3d_clk.clkr.hw.init->rate_max[VDD_HIGH] =
+		gcc_oxili_gfx3d_clk.clkr.vdd_data.rate_max[VDD_HIGH] =
 			598000000;
 	}
 
-	gpll3_out_main.clkr.hw.init->rate_max[VDD_LOW_L1] = 0;
-	gpll3_out_main.clkr.hw.init->rate_max[VDD_NOMINAL] = 1400000000;
+	gpll3_out_main.clkr.vdd_data.rate_max[VDD_LOW_L1] = 0;
+	gpll3_out_main.clkr.vdd_data.rate_max[VDD_NOMINAL] = 1400000000;
 
-	csi0phytimer_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 100000000;
-	csi0phytimer_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] = 200000000;
-	csi0phytimer_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 266670000;
+	csi0phytimer_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 100000000;
+	csi0phytimer_clk_src.clkr.vdd_data.rate_max[VDD_LOW_L1] = 200000000;
+	csi0phytimer_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 266670000;
 	csi0phytimer_clk_src.freq_tbl = ftbl_csi0phytimer_clk_src_qm215;
 
-	csi1phytimer_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 100000000;
-	csi1phytimer_clk_src.clkr.hw.init->rate_max[VDD_LOW_L1] = 200000000;
-	csi1phytimer_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 266670000;
+	csi1phytimer_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 100000000;
+	csi1phytimer_clk_src.clkr.vdd_data.rate_max[VDD_LOW_L1] = 200000000;
+	csi1phytimer_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 266670000;
 	csi1phytimer_clk_src.freq_tbl = ftbl_csi0phytimer_clk_src_qm215;
 
-	sdcc1_apps_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 200000000;
-	sdcc1_apps_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 400000000;
+	sdcc1_apps_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 200000000;
+	sdcc1_apps_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 400000000;
 
-	usb_hs_system_clk_src.clkr.hw.init->rate_max[VDD_LOW] = 800000000;
-	usb_hs_system_clk_src.clkr.hw.init->rate_max[VDD_NOMINAL] = 133333000;
-	usb_hs_system_clk_src.clkr.hw.init->rate_max[VDD_HIGH] = 177780000;
+	usb_hs_system_clk_src.clkr.vdd_data.rate_max[VDD_LOW] = 800000000;
+	usb_hs_system_clk_src.clkr.vdd_data.rate_max[VDD_NOMINAL] = 133333000;
+	usb_hs_system_clk_src.clkr.vdd_data.rate_max[VDD_HIGH] = 177780000;
 	usb_hs_system_clk_src.freq_tbl = ftbl_usb_hs_system_clk_src_qm215;
 
 	/*
