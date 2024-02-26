@@ -177,9 +177,21 @@ static void cpucc_clk_list_registers(struct seq_file *f, struct clk_hw *hw)
 	for (i = 0; i < size; i++) {
 		regmap_read(cpuclk->clkr.regmap,
 				cpuclk->reg_offset + data[i].offset, &val);
-		clock_debug_output(f, false,
+		clock_debug_output(f,
 				"%20s: 0x%.8x\n", data[i].name, val);
 	}
+}
+
+static struct clk_regmap_ops clk_rcg2_regmap_ops = {
+	.list_registers = cpucc_clk_list_registers,
+};
+
+static void clk_cpu_init(struct clk_hw *hw)
+{
+	struct clk_regmap *rclk = to_clk_regmap(hw);
+
+	if (!rclk->ops)
+		rclk->ops = &clk_rcg2_regmap_ops;
 }
 
 static unsigned long cpucc_clk_recalc_rate(struct clk_hw *hw,
@@ -308,7 +320,7 @@ static const struct clk_ops cpucc_clk_ops = {
 	.determine_rate = cpucc_clk_determine_rate,
 	.recalc_rate = cpucc_clk_recalc_rate,
 	.debug_init = clk_debug_measure_add,
-	.list_registers = cpucc_clk_list_registers,
+	.init = clk_cpu_init,
 };
 
 /* Initial configuration for 1305.6MHz */
@@ -337,6 +349,8 @@ static struct clk_pll apcs_cpu_pll = {
 		.parent_names = (const char *[]){ "bi_tcxo_ao" },
 		.num_parents = 1,
 		.ops = &clk_pll_hf_ops,
+	},
+	.clkr.vdd_data = {
 		.vdd_class = &vdd_hf_pll,
 		.rate_max = (unsigned long[VDD_HF_PLL_NUM]) {
 			[VDD_HF_PLL_SVS] = 1000000000,
@@ -360,9 +374,11 @@ static struct clk_regmap_mux_div apcs_mux_c1_clk = {
 		.name = "apcs_mux_c1_clk",
 		.parent_names = apcs_mux_clk_parent_name0,
 		.num_parents = 3,
-		.vdd_class = &vdd_cpu_c1,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &cpucc_clk_ops,
+	},
+	.clkr.vdd_data = {
+		.vdd_class = &vdd_cpu_c1,
 	},
 };
 
@@ -379,9 +395,11 @@ static struct clk_regmap_mux_div apcs_mux_cci_clk = {
 		.name = "apcs_mux_cci_clk",
 		.parent_names = apcs_mux_clk_parent_name1,
 		.num_parents = 2,
-		.vdd_class = &vdd_cpu_cci,
 		.flags = CLK_SET_RATE_PARENT,
 		.ops = &cpucc_clk_ops,
+	},
+	.clkr.vdd_data = {
+		.vdd_class = &vdd_cpu_cci,
 	},
 };
 
@@ -442,10 +460,11 @@ static void cpucc_clk_get_speed_bin(struct platform_device *pdev, int *bin,
 }
 
 static int cpucc_clk_get_fmax_vdd_class(struct platform_device *pdev,
-			struct clk_init_data *clk_intd, char *prop_name)
+			struct clk_regmap *clkr, char *prop_name)
 {
 	struct device_node *of = pdev->dev.of_node;
-	struct clk_vdd_class *vdd = clk_intd->vdd_class;
+	struct clk_vdd_class_data *clk_vdd_data = &clkr->vdd_data;
+	struct clk_vdd_class *vdd = clk_vdd_data->vdd_class;
 	u32 *array;
 	int prop_len, i, j, ret;
 	int num = vdd->num_regulators + 1;
@@ -472,9 +491,9 @@ static int cpucc_clk_get_fmax_vdd_class(struct platform_device *pdev,
 	if (!vdd->vdd_uv)
 		return -ENOMEM;
 
-	clk_intd->rate_max = devm_kzalloc(&pdev->dev,
+	clk_vdd_data->rate_max = devm_kzalloc(&pdev->dev,
 				prop_len * sizeof(unsigned long), GFP_KERNEL);
-	if (!clk_intd->rate_max)
+	if (!clk_vdd_data->rate_max)
 		return -ENOMEM;
 
 	array = kzalloc(prop_len * sizeof(u32) * num, GFP_KERNEL);
@@ -486,7 +505,7 @@ static int cpucc_clk_get_fmax_vdd_class(struct platform_device *pdev,
 		return -ENOMEM;
 
 	for (i = 0; i < prop_len; i++) {
-		clk_intd->rate_max[i] = array[num * i];
+		clk_vdd_data->rate_max[i] = array[num * i];
 		for (j = 1; j < num; j++) {
 			vdd->vdd_uv[(num - 1) * i + (j - 1)] =
 					array[num * i + j];
@@ -496,33 +515,33 @@ static int cpucc_clk_get_fmax_vdd_class(struct platform_device *pdev,
 	kfree(array);
 	vdd->num_levels = prop_len;
 	vdd->cur_level = prop_len;
-	clk_intd->num_rate_max = prop_len;
+	clk_vdd_data->num_rate_max = prop_len;
 
 	return 0;
 }
 
-static int find_vdd_level(struct clk_init_data *clk_intd, unsigned long rate)
+static int find_vdd_level(struct clk_vdd_class_data *clk_vdd_data,
+							unsigned long rate)
 {
 	int level;
 
-	for (level = 0; level < clk_intd->num_rate_max; level++)
-		if (rate <= clk_intd->rate_max[level])
+	for (level = 0; level < clk_vdd_data->num_rate_max; level++)
+		if (rate <= clk_vdd_data->rate_max[level])
 			break;
 
-	if (level == clk_intd->num_rate_max) {
-		pr_err("Rate %lu for %s is greater than highest Fmax\n", rate,
-				clk_intd->name);
+	if (level == clk_vdd_data->num_rate_max) {
+		pr_err("Rate %lu is greater than highest Fmax\n", rate);
 		return -EINVAL;
 	}
 
 	return level;
 }
 
-static int
-cpucc_clk_add_opp(struct clk_hw *hw, struct device *dev, unsigned long max_rate)
+static int cpucc_clk_add_opp(struct clk_regmap *clkr, struct device *dev,
+							unsigned long max_rate)
 {
-	struct clk_init_data *clk_intd =  (struct clk_init_data *)hw->init;
-	struct clk_vdd_class *vdd = clk_intd->vdd_class;
+	struct clk_vdd_class_data *clk_vdd_data = &clkr->vdd_data;
+	struct clk_vdd_class *vdd = clk_vdd_data->vdd_class;
 	int level, uv, j = 1;
 	unsigned long rate = 0;
 	long ret;
@@ -533,8 +552,8 @@ cpucc_clk_add_opp(struct clk_hw *hw, struct device *dev, unsigned long max_rate)
 	}
 
 	while (1) {
-		rate = clk_intd->rate_max[j++];
-		level = find_vdd_level(clk_intd, rate);
+		rate = clk_vdd_data->rate_max[j++];
+		level = find_vdd_level(clk_vdd_data, rate);
 		if (level <= 0) {
 			pr_warn("clock-cpu: no corner for %lu.\n", rate);
 			return -EINVAL;
@@ -563,10 +582,10 @@ static void cpucc_clk_print_opp_table(int cpu)
 {
 	struct dev_pm_opp *oppfmax, *oppfmin;
 	unsigned long apc_c1_fmax, apc_c1_fmin;
-	u32 max_index = apcs_mux_c1_clk.clkr.hw.init->num_rate_max;
+	u32 max_index = apcs_mux_c1_clk.clkr.vdd_data.num_rate_max;
 
-	apc_c1_fmax = apcs_mux_c1_clk.clkr.hw.init->rate_max[max_index - 1];
-	apc_c1_fmin = apcs_mux_c1_clk.clkr.hw.init->rate_max[1];
+	apc_c1_fmax = apcs_mux_c1_clk.clkr.vdd_data.rate_max[max_index - 1];
+	apc_c1_fmin = apcs_mux_c1_clk.clkr.vdd_data.rate_max[1];
 
 	oppfmax = dev_pm_opp_find_freq_exact(get_cpu_device(cpu),
 					apc_c1_fmax, true);
@@ -582,14 +601,14 @@ static void cpucc_clk_print_opp_table(int cpu)
 static void cpucc_clk_populate_opp_table(struct platform_device *pdev)
 {
 	unsigned long apc_c1_fmax;
-	u32 max_index = apcs_mux_c1_clk.clkr.hw.init->num_rate_max;
+	u32 max_index = apcs_mux_c1_clk.clkr.vdd_data.num_rate_max;
 	int cpu, sdm_cpu = 0;
 
-	apc_c1_fmax = apcs_mux_c1_clk.clkr.hw.init->rate_max[max_index - 1];
+	apc_c1_fmax = apcs_mux_c1_clk.clkr.vdd_data.rate_max[max_index - 1];
 
 	for_each_possible_cpu(cpu) {
 		sdm_cpu = cpu;
-		WARN(cpucc_clk_add_opp(&apcs_mux_c1_clk.clkr.hw,
+		WARN(cpucc_clk_add_opp(&apcs_mux_c1_clk.clkr,
 		 get_cpu_device(cpu), apc_c1_fmax),
 		  "Failed to add OPP levels for apcs_mux_c1_clk\n");
 	}
@@ -800,13 +819,12 @@ static int cpucc_driver_probe(struct platform_device *pdev)
 			"qcom,speed%d-bin-v%d-%s", speed_bin, version, "c1");
 
 	ret = cpucc_clk_get_fmax_vdd_class(pdev,
-		(struct clk_init_data *)apcs_mux_c1_clk.clkr.hw.init,
+		&apcs_mux_c1_clk.clkr,
 				 prop_name);
 	if (ret) {
 		dev_err(&pdev->dev, "Didn't get c1 speed bin\n");
 		ret = cpucc_clk_get_fmax_vdd_class(pdev,
-				(struct clk_init_data *)
-				apcs_mux_c1_clk.clkr.hw.init,
+				&apcs_mux_c1_clk.clkr,
 					prop_name);
 		if (ret) {
 			dev_err(&pdev->dev, "Unable to get vdd class for c1\n");
@@ -819,13 +837,12 @@ static int cpucc_driver_probe(struct platform_device *pdev)
 			"qcom,speed%d-bin-v%d-%s", speed_bin, version, "cci");
 
 		ret = cpucc_clk_get_fmax_vdd_class(pdev,
-			(struct clk_init_data *)apcs_mux_cci_clk.clkr.hw.init,
+			&apcs_mux_cci_clk.clkr,
 				 prop_name);
 		if (ret) {
 			dev_err(&pdev->dev, "Didn't get cci speed bin\n");
 			ret = cpucc_clk_get_fmax_vdd_class(pdev,
-				(struct clk_init_data *)
-				apcs_mux_cci_clk.clkr.hw.init,
+				&apcs_mux_cci_clk.clkr,
 					prop_name);
 			if (ret) {
 				dev_err(&pdev->dev, "Unable get vdd class for cci\n");
