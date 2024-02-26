@@ -29,10 +29,10 @@ subdir-y += ti
 subdir-y += xilinx
 subdir-y += zte
 
-ifneq ($(CONFIG_OF_IGNORE_QCOM_VENDOR_DTS),y)
 dtstree	:= $(srctree)/$(src)
 vendor  := $(dtstree)/vendor-legacy
 ifneq "$(wildcard $(vendor)/Makefile)" ""
-    subdir-y += vendor-legacy
-endif
+    ifneq ($(CONFIG_OF_IGNORE_QCOM_VENDOR_DTS),y)
+        subdir-y += vendor-legacy
+    endif
 endif
