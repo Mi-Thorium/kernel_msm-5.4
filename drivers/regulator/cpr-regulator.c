@@ -5730,7 +5730,7 @@ static struct platform_driver cpr_regulator_driver = {
  * This initialization function should be called in systems in which driver
  * registration ordering must be controlled precisely.
  */
-int __init cpr_regulator_init(void)
+int cpr_regulator_init(void)
 {
 	static bool initialized;
 
@@ -5743,6 +5743,11 @@ int __init cpr_regulator_init(void)
 }
 EXPORT_SYMBOL(cpr_regulator_init);
 
+static int __init cpr_regulator_initcall(void)
+{
+	return cpr_regulator_init();
+}
+
 static void __exit cpr_regulator_exit(void)
 {
 	platform_driver_unregister(&cpr_regulator_driver);
@@ -5752,5 +5757,5 @@ static void __exit cpr_regulator_exit(void)
 MODULE_DESCRIPTION("CPR regulator driver");
 MODULE_LICENSE("GPL v2");
 
-arch_initcall(cpr_regulator_init);
+arch_initcall(cpr_regulator_initcall);
 module_exit(cpr_regulator_exit);
