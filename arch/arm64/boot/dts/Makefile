@@ -7,7 +7,7 @@ ifneq "$(wildcard $(vendor)/Makefile)" ""
     endif
 
     subdir-y += xiaomi-msm8937
-    subdir-y += xiaomi-sdm439
+    #subdir-y += xiaomi-sdm439
 else
 subdir-y += actions
 subdir-y += al
