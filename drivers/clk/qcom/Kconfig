@@ -883,6 +883,7 @@ config SDM_DEBUGCC_439
 config CLOCK_CPU_SDM
 	bool "CPU SDM Clock Controller"
 	depends on COMMON_CLK_QCOM
+	depends on BROKEN
 	help
 	 Support for the cpu clock controller on SDM based devices(e.g. QM215/SDM429).
 	 Say Y if you want to support CPU clock scaling using
