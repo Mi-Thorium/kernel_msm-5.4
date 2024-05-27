@@ -158,7 +158,7 @@ struct clk_smd_rpm_req {
 
 struct rpm_smd_clk_desc {
 	struct clk_hw **clks;
-	size_t num_rpm_clks;
+	size_t num_rpm_clks; // not really used
 	size_t num_clks;
 };
 
@@ -1117,7 +1117,7 @@ static struct clk_hw *qm215_clks[] = {
 
 static const struct rpm_smd_clk_desc rpm_clk_qm215 = {
 	.clks = qm215_clks,
-	.num_rpm_clks = RPM_SMD_SYSMMNOC_A_CLK,
+	.num_rpm_clks = RPM_SMD_SYSMMNOC_A_CLK, // not really used
 	.num_clks = ARRAY_SIZE(qm215_clks),
 };
 
@@ -1243,6 +1243,41 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 
 	hw_clk_handoff = of_property_read_bool(pdev->dev.of_node,
 						"qcom,hw-clk-handoff");
+	if (is_qm215 || is_sdm439 || is_msm8920 || is_msm8940) {
+		for (i = 0; i < desc->num_clks; i++) {
+			if (!hw_clks[i])
+				continue;
+
+			switch (i) {
+				case RPM_SMD_XO_CLK_SRC:
+				case RPM_SMD_XO_A_CLK_SRC:
+				case RPM_SMD_QDSS_CLK:
+				case RPM_SMD_QDSS_A_CLK:
+				case RPM_SMD_PNOC_CLK:
+				case RPM_SMD_PNOC_A_CLK:
+				case RPM_SMD_SNOC_CLK:
+				case RPM_SMD_SNOC_A_CLK:
+				case RPM_SMD_BIMC_CLK:
+				case RPM_SMD_BIMC_A_CLK:
+				case RPM_SMD_BIMC_GPU_CLK:
+				case RPM_SMD_BIMC_GPU_A_CLK:
+				case RPM_SMD_IPA_CLK:
+				case RPM_SMD_IPA_A_CLK:
+				case RPM_SMD_SYSMMNOC_CLK:
+				case RPM_SMD_SYSMMNOC_A_CLK:
+					dev_info(&pdev->dev, "clk_smd_rpm handoff %d %s\n", i, hw_clks[i]->init->name);
+					ret = clk_smd_rpm_handoff(hw_clks[i]);
+					break;
+				default:
+					dev_info(&pdev->dev, "Voter clk handoff %d %s\n", i, hw_clks[i]->init->name);
+					ret = voter_clk_handoff(hw_clks[i]);
+					break;
+			}
+
+			if (ret)
+				goto err;
+		}
+	} else
 	if (hw_clk_handoff) {
 		if (desc->num_rpm_clks) {
 			for (i = 0; i <= desc->num_rpm_clks; i++) {
