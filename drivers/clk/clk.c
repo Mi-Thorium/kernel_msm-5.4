@@ -4045,7 +4045,7 @@ __clk_register(struct device *dev, struct device_node *np, struct clk_hw *hw)
 	 * Set it to NULL so that provider drivers can't use it either and so that
 	 * we catch use of hw->init early on in the core.
 	 */
-	hw->init = NULL;
+	//hw->init = NULL;
 
 	core = kzalloc(sizeof(*core), GFP_KERNEL);
 	if (!core) {
