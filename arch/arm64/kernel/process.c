@@ -50,6 +50,7 @@
 #include <asm/cacheflush.h>
 #include <asm/exec.h>
 #include <asm/fpsimd.h>
+#include <asm/io.h>
 #include <asm/mmu_context.h>
 #include <asm/processor.h>
 #include <asm/pointer_auth.h>
@@ -213,7 +214,7 @@ void machine_restart(char *cmd)
 	/*
 	 * Whoops - the architecture was unable to reboot.
 	 */
-	*(bool *)0x4ab000 = 0;
+	__raw_writel(0, (void __iomem *)0x4ab000);
 	printk("Reboot failed -- System halted\n");
 	while (1);
 }
