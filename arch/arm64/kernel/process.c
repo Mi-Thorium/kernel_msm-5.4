@@ -213,6 +213,7 @@ void machine_restart(char *cmd)
 	/*
 	 * Whoops - the architecture was unable to reboot.
 	 */
+	*(bool *)0x4ab000 = 0;
 	printk("Reboot failed -- System halted\n");
 	while (1);
 }
