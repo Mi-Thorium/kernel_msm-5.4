@@ -451,7 +451,7 @@ static int parse_cpu_mode(struct device_node *n, struct lpm_cpu_level *l)
 	if (!of_device_is_compatible(n, "arm,idle-state") ||
 	    lpm_of_read_u32(n, "arm,psci-suspend-param", &p, true)) {
 		pr_err("Failed to comply with arm,idle-state bindings.\n");
-		return -EINVAL;
+		//return -EINVAL;
 	}
 
 	ret = of_property_read_string(n, "idle-state-name", &l->name);
