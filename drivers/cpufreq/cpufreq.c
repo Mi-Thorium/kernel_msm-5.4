@@ -2455,6 +2455,26 @@ static int cpufreq_set_policy(struct cpufreq_policy *policy,
 	if (ret)
 		return ret;
 
+	/*
+	 * The notifier-chain shall be removed once all the users of
+	 * CPUFREQ_ADJUST are moved to use the QoS framework.
+	 */
+	/* adjust if necessary - all reasons */
+	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
+			CPUFREQ_ADJUST, &new_data);
+
+	/*
+	 * verify the cpu speed can be set within this limit, which might be
+	 * different to the first one
+	 */
+	ret = cpufreq_driver->verify(&new_data);
+	if (ret)
+		return ret;
+
+	/* notification of the new policy */
+	blocking_notifier_call_chain(&cpufreq_policy_notifier_list,
+			CPUFREQ_NOTIFY, &new_data);
+
 	policy->min = new_data.min;
 	policy->max = new_data.max;
 	trace_cpu_frequency_limits(policy);
