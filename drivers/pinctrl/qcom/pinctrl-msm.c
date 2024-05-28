@@ -513,19 +513,6 @@ static int msm_gpio_direction_output(struct gpio_chip *chip, unsigned offset, in
 	return 0;
 }
 
-static int msm_gpio_get_direction(struct gpio_chip *chip, unsigned int offset)
-{
-	struct msm_pinctrl *pctrl = gpiochip_get_data(chip);
-	const struct msm_pingroup *g;
-	u32 val;
-
-	g = &pctrl->soc->groups[offset];
-
-	val = msm_readl_ctl(pctrl, g);
-
-	/* 0 = output, 1 = input */
-	return val & BIT(g->oe_bit) ? 0 : 1;
-}
 
 static int msm_gpio_get(struct gpio_chip *chip, unsigned offset)
 {
@@ -685,7 +672,6 @@ out:
 static const struct gpio_chip msm_gpio_template = {
 	.direction_input  = msm_gpio_direction_input,
 	.direction_output = msm_gpio_direction_output,
-	.get_direction    = msm_gpio_get_direction,
 	.get              = msm_gpio_get,
 	.set              = msm_gpio_set,
 	.request          = gpiochip_generic_request,
