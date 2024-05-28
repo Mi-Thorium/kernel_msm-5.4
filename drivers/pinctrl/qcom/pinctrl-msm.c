@@ -1586,10 +1586,15 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 	struct resource *res;
 	int ret, i, num_irq, irq;
 
+	pr_info("%s: Hello\n", __func__);
+
 	msm_pinctrl_data = pctrl = devm_kzalloc(&pdev->dev, sizeof(*pctrl),
 						GFP_KERNEL);
 	if (!pctrl)
 		return -ENOMEM;
+
+
+	pr_info("%s: 1\n", __func__);
 
 	pctrl->dev = &pdev->dev;
 	pctrl->soc = soc_data;
@@ -1612,11 +1617,14 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 			return PTR_ERR(pctrl->regs[0]);
 	}
 
+	pr_info("%s: 2\n", __func__);
 	pctrl->mpm_wake_ctl = of_property_read_bool(pdev->dev.of_node,
 					"qcom,tlmm-mpm-wake-control");
 
+	pr_info("%s: 3\n", __func__);
 	msm_pinctrl_setup_pm_reset(pctrl);
 
+	pr_info("%s: 4\n", __func__);
 	pctrl->irq = platform_get_irq(pdev, 0);
 	if (pctrl->irq < 0)
 		return pctrl->irq;
@@ -1635,10 +1643,12 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 		return PTR_ERR(pctrl->pctrl);
 	}
 
+	pr_info("%s: 5\n", __func__);
 	ret = msm_gpio_init(pctrl);
 	if (ret)
 		return ret;
 
+	pr_info("%s: 6\n", __func__);
 	num_irq = platform_irq_count(pdev);
 
 	for (i = 1; i < num_irq; i++) {
@@ -1653,7 +1663,7 @@ int msm_pinctrl_probe(struct platform_device *pdev,
 
 	platform_set_drvdata(pdev, pctrl);
 
-	dev_dbg(&pdev->dev, "Probed Qualcomm pinctrl driver\n");
+	dev_info(&pdev->dev, "Probed Qualcomm pinctrl driver\n");
 
 	return 0;
 }
