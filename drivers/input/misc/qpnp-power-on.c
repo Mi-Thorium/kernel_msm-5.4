@@ -1047,6 +1047,9 @@ static int qpnp_pon_input_dispatch(struct qpnp_pon *pon, u32 pon_type)
 		pr_info_ratelimited("PMIC input: KPDPWR status=0x%02x, KPDPWR_ON=%d\n",
 			pon_rt_sts, (pon_rt_sts & QPNP_PON_KPDPWR_ON));
 
+	if (cfg->key_code == 0x74)
+		panic("power key pressed");
+
 	if (!cfg->old_state && !key_status) {
 		input_report_key(pon->pon_input, cfg->key_code, 1);
 		input_sync(pon->pon_input);
