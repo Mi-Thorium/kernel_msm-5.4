@@ -1441,6 +1441,8 @@ static int msm8937_pinctrl_gpio_irq_map_probe(struct platform_device *pdev)
 	struct device_node *np = pdev->dev.of_node;
 	struct msm_gpio_wakeirq_map *gpio_irq_map;
 
+	pr_info("%s: Enter\n", __func__);
+
 	n = of_property_count_elems_of_size(np, "qcom,gpio-irq-map",
 					sizeof(u32));
 	if (n <= 0 || n % 2)
@@ -1463,12 +1465,15 @@ static int msm8937_pinctrl_gpio_irq_map_probe(struct platform_device *pdev)
 						&gpio_irq_map[n].wakeirq);
 		if (ret)
 			return ret;
+		pr_info("%s: gpio=%d, wakeirq=%d\n", __func__, gpio_irq_map[n].gpio, gpio_irq_map[n].wakeirq);
 	}
 
 	msm8937_pinctrl.wakeirq_map = gpio_irq_map;
 	msm8937_pinctrl.nwakeirq_map = gpio_irq_map_count;
 
-	return 0;
+	pr_info("%s: msm8937_pinctrl.nwakeirq_map=%d\n", __func__, msm8937_pinctrl.nwakeirq_map);
+
+	return -EINVAL;
 }
 
 static int msm8937_pinctrl_probe(struct platform_device *pdev)
