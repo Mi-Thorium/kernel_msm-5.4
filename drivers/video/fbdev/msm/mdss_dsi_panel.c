@@ -2435,7 +2435,7 @@ int mdss_panel_parse_bl_settings(struct device_node *np,
 			}
 			ctrl_pdata->pwm_period = tmp;
 			if (ctrl_pdata->pwm_pmi) {
-				//ctrl_pdata->pwm_bl = of_pwm_get(np, NULL);
+				ctrl_pdata->pwm_bl = of_pwm_get(np, NULL);
 				if (IS_ERR(ctrl_pdata->pwm_bl)) {
 					pr_err("%s: Error, pwm device\n",
 								__func__);

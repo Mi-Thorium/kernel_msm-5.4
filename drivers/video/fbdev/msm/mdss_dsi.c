@@ -140,6 +140,11 @@ static void mdss_dsi_pm_qos_add_request(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 	mutex_lock(&ctrl_pdata->shared_data->pm_qos_lock);
 	if (!ctrl_pdata->shared_data->pm_qos_req_cnt) {
 		pr_debug("%s: add request irq\n", __func__);
+
+		mdss_dsi_pm_qos_request.type = PM_QOS_REQ_AFFINE_IRQ;
+		mdss_dsi_pm_qos_request.irq = irq_info->irq;
+		pm_qos_add_request(&mdss_dsi_pm_qos_request,
+			PM_QOS_CPU_DMA_LATENCY, PM_QOS_DEFAULT_VALUE);
 	}
 	ctrl_pdata->shared_data->pm_qos_req_cnt++;
 	mutex_unlock(&ctrl_pdata->shared_data->pm_qos_lock);
