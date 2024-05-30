@@ -2901,6 +2901,8 @@ static int i2c_msm_probe(struct platform_device *pdev)
 	struct i2c_msm_ctrl *ctrl;
 	int ret = 0;
 
+	pr_info("%s: hi\n", __func__);
+
 	ctrl = devm_kzalloc(&pdev->dev, sizeof(*ctrl), GFP_KERNEL);
 	if (!ctrl)
 		return -ENOMEM;
@@ -2971,6 +2973,7 @@ static int i2c_msm_probe(struct platform_device *pdev)
 	if (ret)
 		goto reg_err;
 
+	pr_info("%s: bye\n", __func__);
 	i2c_msm_dbg(ctrl, MSM_PROF, "probe() completed with success\n");
 	return 0;
 
