@@ -18,7 +18,7 @@
 
 #include <linux/mdss_smmu_ext.h>
 
-#include <asm/dma-iommu.h>
+//#include <asm/dma-iommu.h>
 #include "soc/qcom/secure_buffer.h"
 
 #include "mdss.h"

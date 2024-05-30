@@ -7,7 +7,6 @@
 #include <linux/kernel.h>
 #include <linux/kthread.h>
 #include <linux/memblock.h>
-#include <linux/bootmem.h>
 #include <linux/iommu.h>
 #include <linux/of_address.h>
 #include <linux/fb.h>

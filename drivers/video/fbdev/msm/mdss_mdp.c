@@ -10,6 +10,7 @@
 #define pr_fmt(fmt)	"%s: " fmt, __func__
 
 #include <linux/clk.h>
+#include <linux/clk/qcom.h>
 #include <linux/debugfs.h>
 #include <linux/delay.h>
 #include <linux/hrtimer.h>
@@ -1614,32 +1615,32 @@ static void mdss_mdp_memory_retention_ctrl(bool mem_ctrl, bool periph_ctrl)
 	__mdss_mdp_reg_access_clk_enable(mdata, true);
 	if (mdss_mdp_clk) {
 		if (mem_ctrl)
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_RETAIN_MEM);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_RETAIN_MEM);
 		else
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_NORETAIN_MEM);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_NORETAIN_MEM);
 
 		if (periph_ctrl) {
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_RETAIN_PERIPH);
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_PERIPH_OFF_CLEAR);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_RETAIN_PERIPH);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_PERIPH_OFF_CLEAR);
 		} else {
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_PERIPH_OFF_SET);
-			clk_set_flags(mdss_mdp_clk, CLKFLAG_NORETAIN_PERIPH);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_PERIPH_OFF_SET);
+			qcom_clk_set_flags(mdss_mdp_clk, CLKFLAG_NORETAIN_PERIPH);
 		}
 	}
 
 	if (mdss_mdp_lut_clk) {
 		if (mem_ctrl)
-			clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_RETAIN_MEM);
+			qcom_clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_RETAIN_MEM);
 		else
-			clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_NORETAIN_MEM);
+			qcom_clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_NORETAIN_MEM);
 
 		if (periph_ctrl) {
-			clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_RETAIN_PERIPH);
-			clk_set_flags(mdss_mdp_lut_clk,
+			qcom_clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_RETAIN_PERIPH);
+			qcom_clk_set_flags(mdss_mdp_lut_clk,
 				CLKFLAG_PERIPH_OFF_CLEAR);
 		} else {
-			clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_PERIPH_OFF_SET);
-			clk_set_flags(mdss_mdp_lut_clk,
+			qcom_clk_set_flags(mdss_mdp_lut_clk, CLKFLAG_PERIPH_OFF_SET);
+			qcom_clk_set_flags(mdss_mdp_lut_clk,
 				CLKFLAG_NORETAIN_PERIPH);
 		}
 	}
@@ -1707,13 +1708,13 @@ static int mdss_mdp_retention_init(struct mdss_data_type *mdata)
 		return -EINVAL;
 	}
 
-	rc = clk_set_flags(mdss_axi_clk, CLKFLAG_NORETAIN_MEM);
+	rc = qcom_clk_set_flags(mdss_axi_clk, CLKFLAG_NORETAIN_MEM);
 	if (rc) {
 		pr_err("failed to set AXI no memory retention %d\n", rc);
 		return rc;
 	}
 
-	rc = clk_set_flags(mdss_axi_clk, CLKFLAG_NORETAIN_PERIPH);
+	rc = qcom_clk_set_flags(mdss_axi_clk, CLKFLAG_NORETAIN_PERIPH);
 	if (rc) {
 		pr_err("failed to set AXI no periphery retention %d\n", rc);
 		return rc;
@@ -4868,7 +4869,7 @@ struct mdss_panel_cfg *mdss_panel_intf_type(int intf_val)
 }
 EXPORT_SYMBOL(mdss_panel_intf_type);
 
-struct irq_info *mdss_intr_line()
+struct irq_info *mdss_intr_line(void)
 {
 	return mdss_mdp_hw.irq_info;
 }
