@@ -2374,6 +2374,7 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 		ttbr0_pgtbl_info->pgtbl_cfg = (struct io_pgtable_cfg) {
 			.quirks		= quirks,
 			.pgsize_bitmap	= smmu->pgsize_bitmap,
+			.coherent_walk	= is_iommu_pt_coherent(smmu_domain),
 			.arm_msm_secure_cfg = {
 				.sec_id = smmu->sec_id,
 				.cbndx = cfg->cbndx,
@@ -2406,7 +2407,7 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 				/* Restore succeeded, we can try again with AARCH32 */
 				ret = -EAGAIN;
 			smmu_domain->smmu = NULL;
-			goto out_unlock;
+			goto out_clear_smmu;
 		}
 	}
 
