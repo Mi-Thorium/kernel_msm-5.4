@@ -3400,11 +3400,13 @@ irqreturn_t mdss_dsi_isr(int irq, void *ptr)
 	pr_debug("%s: ndx=%d isr=%x\n", __func__, ctrl->ndx, isr);
 
 	if (isr & DSI_INTR_ERROR) {
+		pr_info("DSI_INTR_ERROR\n");
 		MDSS_XLOG(ctrl->ndx, ctrl->mdp_busy, isr, 0x97);
 		mdss_dsi_error(ctrl);
 	}
 
 	if (isr & DSI_INTR_BTA_DONE) {
+		pr_info("DSI_INTR_BTA_DONE\n");
 		MDSS_XLOG(ctrl->ndx, ctrl->mdp_busy, isr, 0x96);
 		spin_lock(&ctrl->mdp_lock);
 		mdss_dsi_disable_irq_nosync(ctrl, DSI_BTA_TERM);
@@ -3431,6 +3433,7 @@ irqreturn_t mdss_dsi_isr(int irq, void *ptr)
 	}
 
 	if (isr & DSI_INTR_VIDEO_DONE) {
+		pr_info("DSI_INTR_VIDEO_DONE\n");
 		MDSS_XLOG(ctrl->ndx, isr, 0x111);
 		spin_lock(&ctrl->mdp_lock);
 		mdss_dsi_disable_irq_nosync(ctrl, DSI_VIDEO_TERM);
@@ -3439,6 +3442,7 @@ irqreturn_t mdss_dsi_isr(int irq, void *ptr)
 	}
 
 	if (isr & DSI_INTR_CMD_DMA_DONE) {
+		pr_info("DSI_INTR_CMD_DMA_DONE\n");
 		MDSS_XLOG(ctrl->ndx, ctrl->mdp_busy, isr, 0x98);
 		spin_lock(&ctrl->mdp_lock);
 		mdss_dsi_disable_irq_nosync(ctrl, DSI_CMD_TERM);
@@ -3447,6 +3451,7 @@ irqreturn_t mdss_dsi_isr(int irq, void *ptr)
 	}
 
 	if (isr & DSI_INTR_CMD_MDP_DONE) {
+		pr_info("DSI_INTR_CMD_MDP_DONE\n");
 		MDSS_XLOG(ctrl->ndx, ctrl->mdp_busy, isr, 0x99);
 		spin_lock(&ctrl->mdp_lock);
 		mdss_dsi_disable_irq_nosync(ctrl, DSI_MDP_TERM);
@@ -3463,6 +3468,7 @@ irqreturn_t mdss_dsi_isr(int irq, void *ptr)
 	}
 
 	if (isr & DSI_INTR_DYNAMIC_REFRESH_DONE) {
+		pr_info("DSI_INTR_DYNAMIC_REFRESH_DONE\n");
 		spin_lock(&ctrl->mdp_lock);
 		mdss_dsi_disable_irq_nosync(ctrl, DSI_DYNAMIC_TERM);
 
