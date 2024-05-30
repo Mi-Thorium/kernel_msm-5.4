@@ -610,8 +610,27 @@ static void arm_smmu_disable_clocks(struct arm_smmu_power_resources *pwr)
 		clk_disable(pwr->clocks[i - 1]);
 }
 
+#ifdef CONFIG_QCOM_BUS_SCALING
+static int arm_smmu_request_bus(struct arm_smmu_power_resources *pwr)
+{
+	if (!pwr->bus_client)
+		return 0;
+	return msm_bus_scale_client_update_request(pwr->bus_client, 1);
+}
+
+static void arm_smmu_unrequest_bus(struct arm_smmu_power_resources *pwr)
+{
+	if (!pwr->bus_client)
+		return;
+	WARN_ON(msm_bus_scale_client_update_request(pwr->bus_client, 0));
+}
+#endif
+
 static int arm_smmu_raise_interconnect_bw(struct arm_smmu_power_resources *pwr)
 {
+#ifdef CONFIG_QCOM_BUS_SCALING
+	arm_smmu_request_bus(pwr);
+#endif
 	if (!pwr->icc_path)
 		return 0;
 	return icc_set_bw(pwr->icc_path, ARM_SMMU_ICC_AVG_BW,
@@ -620,6 +639,9 @@ static int arm_smmu_raise_interconnect_bw(struct arm_smmu_power_resources *pwr)
 
 static void arm_smmu_lower_interconnect_bw(struct arm_smmu_power_resources *pwr)
 {
+#ifdef CONFIG_QCOM_BUS_SCALING
+	arm_smmu_unrequest_bus(pwr);
+#endif
 	if (!pwr->icc_path)
 		return;
 	WARN_ON(icc_set_bw(pwr->icc_path, ARM_SMMU_ICC_AVG_BW,
@@ -4923,9 +4945,41 @@ static int arm_smmu_init_regulators(struct arm_smmu_power_resources *pwr)
 	return ret;
 }
 
+#ifdef CONFIG_QCOM_BUS_SCALING
+static int arm_smmu_init_bus_scaling(struct arm_smmu_power_resources *pwr)
+{
+	struct device *dev = pwr->dev;
+
+	/* We don't want the bus APIs to print an error message */
+	if (!of_find_property(dev->of_node, "qcom,msm-bus,name", NULL)) {
+		dev_dbg(dev, "No bus scaling info\n");
+		return 0;
+	}
+
+	pwr->bus_dt_data = msm_bus_cl_get_pdata(pwr->pdev);
+	if (!pwr->bus_dt_data) {
+		dev_err(dev, "Unable to read bus-scaling from devicetree\n");
+		return -EINVAL;
+	}
+
+	pwr->bus_client = msm_bus_scale_register_client(pwr->bus_dt_data);
+	if (!pwr->bus_client) {
+		dev_err(dev, "Bus client registration failed\n");
+		return -EPROBE_DEFER;
+	}
+
+	return 0;
+}
+#endif
+
 static int arm_smmu_init_interconnect(struct arm_smmu_power_resources *pwr)
 {
 	struct device *dev = pwr->dev;
+
+#ifdef CONFIG_QCOM_BUS_SCALING
+	if (!arm_smmu_init_bus_scaling(pwr))
+		return 0;
+#endif
 
 	/* We don't want the interconnect APIs to print an error message */
 	if (!of_find_property(dev->of_node, "interconnects", NULL)) {
@@ -4982,7 +5036,12 @@ static struct arm_smmu_power_resources *arm_smmu_init_power_resources(
 
 static void arm_smmu_exit_power_resources(struct arm_smmu_power_resources *pwr)
 {
-	icc_put(pwr->icc_path);
+#ifdef CONFIG_QCOM_BUS_SCALING
+	if (pwr->bus_client)
+		msm_bus_scale_unregister_client(pwr->bus_client);
+#endif
+	if (pwr->icc_path)
+		icc_put(pwr->icc_path);
 }
 
 static int arm_smmu_device_cfg_probe(struct arm_smmu_device *smmu)
