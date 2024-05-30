@@ -692,7 +692,7 @@ int mdss_dsi_panel_init(struct device_node *node,
 int mdss_dsi_panel_timing_switch(struct mdss_dsi_ctrl_pdata *ctrl_pdata,
 			struct mdss_panel_timing *timing);
 
-int mdss_panel_parse_bl_settings(struct device_node *np,
+int mdss_panel_parse_bl_settings(struct device *dev, struct device_node *np,
 			struct mdss_dsi_ctrl_pdata *ctrl_pdata);
 int mdss_panel_get_dst_fmt(u32 bpp, char mipi_mode, u32 pixel_packing,
 				char *dst_format);

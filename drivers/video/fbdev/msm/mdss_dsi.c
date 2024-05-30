@@ -3594,7 +3594,7 @@ static int mdss_dsi_ctrl_probe(struct platform_device *pdev)
 	if (!mdss_dsi_is_hw_config_split(ctrl_pdata->shared_data) ||
 		(mdss_dsi_is_hw_config_split(ctrl_pdata->shared_data) &&
 		(ctrl_pdata->panel_data.panel_info.pdest == DISPLAY_1))) {
-		rc = mdss_panel_parse_bl_settings(dsi_pan_node, ctrl_pdata);
+		rc = mdss_panel_parse_bl_settings(&pdev->dev, dsi_pan_node, ctrl_pdata);
 		if (rc) {
 			pr_warn("%s: dsi bl settings parse failed\n", __func__);
 			/* Panels like AMOLED and dsi2hdmi chip

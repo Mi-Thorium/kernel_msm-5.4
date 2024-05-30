@@ -2400,7 +2400,7 @@ static int dsi_panel_wled_register(struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 }
 #endif
 
-int mdss_panel_parse_bl_settings(struct device_node *np,
+int mdss_panel_parse_bl_settings(struct device *dev, struct device_node *np,
 			struct mdss_dsi_ctrl_pdata *ctrl_pdata)
 {
 	const char *data;
@@ -2435,7 +2435,7 @@ int mdss_panel_parse_bl_settings(struct device_node *np,
 			}
 			ctrl_pdata->pwm_period = tmp;
 			if (ctrl_pdata->pwm_pmi) {
-				ctrl_pdata->pwm_bl = of_pwm_get(np, NULL);
+				ctrl_pdata->pwm_bl = of_pwm_get(dev, np, NULL);
 				if (IS_ERR(ctrl_pdata->pwm_bl)) {
 					pr_err("%s: Error, pwm device\n",
 								__func__);
