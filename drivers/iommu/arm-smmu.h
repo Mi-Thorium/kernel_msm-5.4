@@ -24,6 +24,10 @@
 #include <soc/qcom/msm_tz_smmu.h>
 #include <linux/qcom_scm.h>
 
+#ifdef CONFIG_QCOM_BUS_SCALING
+#include <linux/msm-bus.h>
+#endif
+
 /* Configuration registers */
 #define ARM_SMMU_GR0_sCR0		0x0
 #define sCR0_VMID16EN			BIT(31)
@@ -301,6 +305,11 @@ struct arm_smmu_power_resources {
 	int				num_gdscs;
 
 	struct icc_path			*icc_path;
+
+#ifdef CONFIG_QCOM_BUS_SCALING
+	uint32_t			bus_client;
+	struct msm_bus_scale_pdata	*bus_dt_data;
+#endif
 
 	/* Protects power_count */
 	struct mutex			power_lock;
