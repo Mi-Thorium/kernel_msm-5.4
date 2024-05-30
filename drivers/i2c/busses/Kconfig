@@ -1425,6 +1425,12 @@ config I2C_MSM_V2
 	  This driver can also be built as a module.  If so, the module
 	  will be called i2c-msm-v2.
 
+config I2C_MSM_V2_LEGACY
+	bool "I2C_MSM_V2 Legacy"
+	depends on I2C_MSM_V2
+	help
+	  Legacy version of I2C_MSM_V2
+
 config I2C_ZX2967
 	tristate "ZTE ZX2967 I2C support"
 	depends on ARCH_ZX
