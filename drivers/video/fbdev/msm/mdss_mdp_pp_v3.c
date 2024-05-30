@@ -326,7 +326,7 @@ static int pp_hist_lut_get_config(char __iomem *base_addr, void *cfg_data,
 		return -EINVAL;
 	}
 	sz = ENHIST_LUT_ENTRIES * sizeof(u32);
-	if (!access_ok(VERIFY_WRITE, lut_data->data, sz)) {
+	if (!access_ok(lut_data->data, sz)) {
 		pr_err("invalid lut address for hist_lut sz %d\n", sz);
 		return -EFAULT;
 	}
