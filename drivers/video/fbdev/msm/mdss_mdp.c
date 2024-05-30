@@ -5370,6 +5370,8 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 				enable, ret, resp);
 
 end:
+	if (ret)
+		pr_err("%s: end ret=%d\n", __func__, ret);
 	kfree(sid_info);
 	mutex_unlock(&mdp_sec_ref_cnt_lock);
 	return ret;

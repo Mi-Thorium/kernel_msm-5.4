@@ -2363,7 +2363,9 @@ static int mdss_dsi_cmd_dma_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 		}
 	}
 
-	if (!IS_ERR_VALUE((unsigned long) ret))
+	if (IS_ERR_VALUE((unsigned long) ret))
+		pr_info("%s: wait_for_completion_timeout error %d\n", __func__, ret);
+	else
 		ret = tp->len;
 
 	if (mctrl && mctrl->dma_addr) {
