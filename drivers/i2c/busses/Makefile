@@ -123,7 +123,11 @@ obj-$(CONFIG_I2C_XILINX)	+= i2c-xiic.o
 obj-$(CONFIG_I2C_XLR)		+= i2c-xlr.o
 obj-$(CONFIG_I2C_XLP9XX)	+= i2c-xlp9xx.o
 obj-$(CONFIG_I2C_RCAR)		+= i2c-rcar.o
+ifeq ($(CONFIG_QCOM_BUS_SCALING),y)
+obj-$(CONFIG_I2C_MSM_V2)        += i2c-msm-v2_legacy.o
+else
 obj-$(CONFIG_I2C_MSM_V2)        += i2c-msm-v2.o
+endif
 obj-$(CONFIG_I2C_ZX2967)	+= i2c-zx2967.o
 obj-$(CONFIG_VIRTIO_I2C)	+= virtio-i2c.o
 
