@@ -854,8 +854,8 @@ static struct clk_hw *holi_clks[] = {
 	[RPM_SMD_QDSS_A_CLK] = &holi_qdss_a_clk.hw,
 	[RPM_SMD_LN_BB_CLK2] = &holi_ln_bb_clk2.hw,
 	[RPM_SMD_LN_BB_CLK2_A] = &holi_ln_bb_clk2_a.hw,
-	[RPM_SMD_RF_CLK5] = &holi_rf_clk5.hw,
-	[RPM_SMD_RF_CLK5_A] = &holi_rf_clk5_a.hw,
+//	[RPM_SMD_RF_CLK5] = &holi_rf_clk5.hw,
+//	[RPM_SMD_RF_CLK5_A] = &holi_rf_clk5_a.hw,
 	[RPM_SMD_CNOC_CLK] = &holi_cnoc_clk.hw,
 	[RPM_SMD_CNOC_A_CLK] = &holi_cnoc_a_clk.hw,
 	[RPM_SMD_IPA_CLK] = &holi_ipa_clk.hw,
@@ -876,7 +876,7 @@ static struct clk_hw *holi_clks[] = {
 	[RPM_SMD_HWKM_A_CLK] = &holi_hwkm_a_clk.hw,
 	[RPM_SMD_PKA_CLK] = &holi_pka_clk.hw,
 	[RPM_SMD_PKA_A_CLK] = &holi_pka_a_clk.hw,
-	[RPM_SMD_BIMC_FREQ_LOG] = &holi_bimc_freq_log.hw,
+//	[RPM_SMD_BIMC_FREQ_LOG] = &holi_bimc_freq_log.hw,
 };
 
 static const struct rpm_smd_clk_desc rpm_clk_holi = {
@@ -1247,7 +1247,7 @@ static int rpm_smd_clk_probe(struct platform_device *pdev)
 
 	hw_clk_handoff = of_property_read_bool(pdev->dev.of_node,
 						"qcom,hw-clk-handoff");
-	if (is_qm215 || is_sdm439 || is_msm8920 || is_msm8940) {
+	if (false) {
 		for (i = 0; i < desc->num_clks; i++) {
 			if (!hw_clks[i])
 				continue;
