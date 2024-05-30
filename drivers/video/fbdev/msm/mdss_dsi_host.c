@@ -1900,8 +1900,8 @@ static int mdss_dsi_cmds2buf_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 				len = mdss_dsi_cmd_dma_tx(ctrl, tp);
 			if (IS_ERR_VALUE((unsigned long) len)) {
 				mdss_dsi_disable_irq(ctrl, DSI_CMD_TERM);
-				pr_err("%s: failed to call cmd_dma_tx for cmd = 0x%x\n",
-					__func__,  cm->payload[0]);
+				pr_err("%s: failed to call cmd_dma_tx for cmd = 0x%x, len = %d\n",
+					__func__,  cm->payload[0], len);
 				return 0;
 			}
 			pr_debug("%s: cmd_dma_tx for cmd = 0x%x, len = %d\n",
