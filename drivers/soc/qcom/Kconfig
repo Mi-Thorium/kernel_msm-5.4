@@ -849,6 +849,14 @@ config QGKI
 	  This flag is absent if the build is a GKI build. If this flag is
 	  enabled, all the ABI compatibilities are not applicable.
 
+config MSM_EVENT_TIMER
+	bool "Event timer"
+        help
+	  This option enables a modules that manages a list of event timers
+	  that need to be monitored by the PM. The enables the PM code to
+	  monitor events that require the core to be awake and ready to
+	  handle the event.
+
 config MSM_PM
 	bool
 	select MSM_IDLE_STATS if DEBUG_FS
