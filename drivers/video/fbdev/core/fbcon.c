@@ -3101,7 +3101,8 @@ int fbcon_set_con2fb_map_ioctl(void __user *argp)
 
 	if (copy_from_user(&con2fb, argp, sizeof(con2fb)))
 		return -EFAULT;
-	if (con2fb.console < 1 || con2fb.console > MAX_NR_CONSOLES)
+	if (con2fb.console < 1 || con2fb.console > MAX_NR_CONSOLES) ||
+			(con2fb.framebuffer >= FB_MAX)
 		return -EINVAL;
 	if (con2fb.framebuffer >= FB_MAX)
 		return -EINVAL;
