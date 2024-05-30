@@ -116,6 +116,7 @@ static struct heap_types_info {
 	MAKE_HEAP_TYPE_MAPPING(DMA),
 	MAKE_HEAP_TYPE_MAPPING(SYSTEM_SECURE),
 	MAKE_HEAP_TYPE_MAPPING(HYP_CMA),
+	MAKE_HEAP_TYPE_MAPPING(SECURE_DMA),
 };
 
 static int msm_ion_debug_heap_show(struct seq_file *s, void *unused)
