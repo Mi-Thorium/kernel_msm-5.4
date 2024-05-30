@@ -39,7 +39,7 @@
 
 #include <linux/msm-bus.h>
 #include <linux/msm-bus-board.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include <soc/qcom/rpm-smd.h>
 #include "soc/qcom/secure_buffer.h"
 #include <asm/cacheflush.h>
@@ -1839,9 +1839,7 @@ static inline int mdss_mdp_irq_clk_register(struct mdss_data_type *mdata,
 
 static void __mdss_restore_sec_cfg(struct mdss_data_type *mdata)
 {
-	int ret;
 	int scm_ret = 0;
-	//u64 scm_ret = 0;
 
 	if (test_bit(MDSS_CAPS_SCM_RESTORE_NOT_REQUIRED, mdata->mdss_caps_map))
 		return;
@@ -1850,10 +1848,10 @@ static void __mdss_restore_sec_cfg(struct mdss_data_type *mdata)
 
 	__mdss_mdp_reg_access_clk_enable(mdata, true);
 
-	ret = scm_restore_sec_cfg(SEC_DEVICE_MDSS, 0, &scm_ret);
-	if (ret || scm_ret)
-		pr_warn("scm_restore_sec_cfg failed %d %llu\n",
-				ret, scm_ret);
+	scm_ret = qcom_scm_restore_sec_cfg(SEC_DEVICE_MDSS, 0);
+	if (scm_ret)
+		pr_warn("scm_restore_sec_cfg failed %llu\n",
+				scm_ret);
 
 	__mdss_mdp_reg_access_clk_enable(mdata, false);
 }
@@ -5249,7 +5247,11 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 	unsigned int resp = -1;
 	int ret = 0;
 	uint32_t *sid_info = NULL;
-	struct scm_desc desc;
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = mem_protect_sd_ctrl_id,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 	bool changed = false;
 
 	mutex_lock(&mdp_sec_ref_cnt_lock);
@@ -5282,9 +5284,9 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 		if (!sid_info)
 			return -ENOMEM;
 		*sid_info = 0x1;
-		desc.arginfo = SCM_ARGS(4, SCM_VAL, SCM_RW, SCM_VAL, SCM_VAL);
+		desc.arginfo = QCOM_SCM_ARGS(4, QCOM_SCM_VAL, QCOM_SCM_RW, QCOM_SCM_VAL, QCOM_SCM_VAL);
 		desc.args[0] = MDP_DEVICE_ID;
-		desc.args[1] = SCM_BUFFER_PHYS(sid_info);
+		desc.args[1] = virt_to_phys(sid_info);
 		desc.args[2] = sizeof(uint32_t);
 
 
@@ -5314,15 +5316,14 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 			mdata->iommu_attached = true;
 
 			dmac_flush_range(sid_info, sid_info + 1);
-			ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				mem_protect_sd_ctrl_id), &desc);
+			ret = scm_call2(&desc);
 			if (ret) {
 				pr_err("Error scm_call MEM_PROTECT_SD_CTRL(%u) ret=%dm resp=%x\n",
 						enable, ret, resp);
 				ret = -EINVAL;
 				goto end;
 			}
-			resp = desc.ret[0];
+			resp = desc.res[0];
 
 			pr_debug("scm_call MEM_PROTECT_SD_CTRL(%u): ret=%d, resp=%x\n",
 					enable, ret, resp);
@@ -5334,15 +5335,14 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 				mdata->sec_cam_en = 0;
 
 			dmac_flush_range(sid_info, sid_info + 1);
-			ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				mem_protect_sd_ctrl_id), &desc);
+			ret = scm_call2(&desc);
 			if (ret)
 				MDSS_XLOG_TOUT_HANDLER("mdp", "dsi0_ctrl",
 						"dsi0_phy", "dsi1_ctrl",
 						"dsi1_phy", "vbif", "vbif_nrt",
 						"dbg_bus", "vbif_dbg_bus",
 						"panic");
-			resp = desc.ret[0];
+			resp = desc.res[0];
 
 			pr_debug("scm_call MEM_PROTECT_SD_CTRL(%u): ret=%d, resp=%x\n",
 					enable, ret, resp);
@@ -5360,12 +5360,11 @@ int mdss_mdp_secure_session_ctrl(unsigned int enable, u64 flags)
 		MDSS_XLOG(enable);
 	} else {
 		desc.args[0] = request.enable = enable;
-		desc.arginfo = SCM_ARGS(1);
+		desc.arginfo = QCOM_SCM_ARGS(1);
 
 		/* Fix this as per latest scm calls */
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-					mem_protect_sd_ctrl_id), &desc);
-		resp = desc.ret[0];
+		ret = scm_call2(&desc);
+		resp = desc.res[0];
 	}
 	pr_debug("scm_call MEM_PROTECT_SD_CTRL(%u): ret=%d, resp=%x\n",
 				enable, ret, resp);
