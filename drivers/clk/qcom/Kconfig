@@ -20,6 +20,8 @@ menuconfig COMMON_CLK_QCOM
 
 if COMMON_CLK_QCOM
 
+source "drivers/clk/qcom/mdss/Kconfig"
+
 config QCOM_A53PLL
 	tristate "MSM8916 A53 PLL"
 	help
