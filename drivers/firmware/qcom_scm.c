@@ -530,7 +530,7 @@ EXPORT_SYMBOL(qcom_scm_mmu_sync);
 
 int qcom_scm_restore_sec_cfg(u32 device_id, u32 spare)
 {
-	return __qcom_scm_restore_sec_cfg(__scm->dev, device_id, spare);
+	return __qcom_scm_restore_sec_cfg(__scm ? __scm->dev : NULL, device_id, spare);
 }
 EXPORT_SYMBOL(qcom_scm_restore_sec_cfg);
 
