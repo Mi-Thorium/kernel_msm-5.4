@@ -5443,9 +5443,11 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	if (of_dma_is_coherent(dev->of_node))
 		smmu->features |= ARM_SMMU_FEAT_COHERENT_WALK;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	idr_init(&smmu->asid_idr);
 	mutex_init(&smmu->idr_mutex);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
 	if (res) {
 		smmu->phys_addr = res->start;
@@ -5454,6 +5456,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu->phys_addr = res->start;
 	smmu->base = devm_ioremap_resource(dev, res);
 	if (IS_ERR(smmu->base))
@@ -5462,14 +5465,17 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	 * The resource size should effectively match the value of SMMU_TOP;
 	 * stash that temporarily until we know PAGESIZE to validate it with.
 	 */
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu->numpage = resource_size(res);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (of_property_read_u32(dev->of_node, "#global-interrupts",
 				 &smmu->num_global_irqs)) {
 		dev_err(dev, "missing #global-interrupts property\n");
 		return -ENODEV;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	num_irqs = 0;
 	while ((res = platform_get_resource(pdev, IORESOURCE_IRQ, num_irqs))) {
 		num_irqs++;
@@ -5477,17 +5483,20 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 			smmu->num_context_irqs++;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (!smmu->num_context_irqs) {
 		dev_err(dev, "found %d interrupts but expected at least %d\n",
 			num_irqs, smmu->num_global_irqs + 1);
 		return -ENODEV;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu->irqs = devm_kcalloc(dev, num_irqs, sizeof(*smmu->irqs),
 				  GFP_KERNEL);
 	if (!smmu->irqs)
 		return -ENOMEM;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	for (i = 0; i < num_irqs; ++i) {
 		int irq = platform_get_irq(pdev, i);
 
@@ -5498,30 +5507,37 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		smmu->irqs[i] = irq;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	parse_driver_options(smmu);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu->pwr = arm_smmu_init_power_resources(pdev);
 	if (IS_ERR(smmu->pwr))
 		return PTR_ERR(smmu->pwr);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	err = arm_smmu_power_on(smmu->pwr);
 	if (err)
 		goto out_exit_power_resources;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu->sec_id = msm_dev_to_device_id(dev);
 	INIT_LIST_HEAD(&smmu->list);
 	spin_lock(&arm_smmu_devices_lock);
 	list_add(&smmu->list, &arm_smmu_devices);
 	spin_unlock(&arm_smmu_devices_lock);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	err = arm_smmu_device_cfg_probe(smmu);
 	if (err)
 		goto out_power_off;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	err = arm_smmu_handoff_cbs(smmu);
 	if (err)
 		goto out_power_off;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (smmu->version == ARM_SMMU_V2) {
 		if (smmu->num_context_banks > smmu->num_context_irqs) {
 			dev_err(dev,
@@ -5534,6 +5550,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		smmu->num_context_irqs = smmu->num_context_banks;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	for (i = 0; i < smmu->num_global_irqs; ++i) {
 		err = devm_request_threaded_irq(smmu->dev, smmu->irqs[i],
 					NULL, arm_smmu_global_fault,
@@ -5546,12 +5563,14 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 		}
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	smmu = arm_smmu_impl_init(smmu);
 	if (IS_ERR(smmu)) {
 		err = PTR_ERR(smmu);
 		goto out_power_off;
 	}
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	iommu_device_set_ops(&smmu->iommu, &arm_smmu_ops.iommu_ops);
 	iommu_device_set_fwnode(&smmu->iommu, dev->fwnode);
 
