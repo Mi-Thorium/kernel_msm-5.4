@@ -5446,10 +5446,6 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	if (of_dma_is_coherent(dev->of_node))
 		smmu->features |= ARM_SMMU_FEAT_COHERENT_WALK;
 
-	smmu = arm_smmu_impl_init(smmu);
-	if (IS_ERR(smmu))
-		return PTR_ERR(smmu);
-
 	idr_init(&smmu->asid_idr);
 	mutex_init(&smmu->idr_mutex);
 
@@ -5551,6 +5547,12 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 				i, smmu->irqs[i]);
 			goto out_power_off;
 		}
+	}
+
+	smmu = arm_smmu_impl_init(smmu);
+	if (IS_ERR(smmu)) {
+		err = PTR_ERR(smmu);
+		goto out_power_off;
 	}
 
 	iommu_device_set_ops(&smmu->iommu, &arm_smmu_ops.iommu_ops);
