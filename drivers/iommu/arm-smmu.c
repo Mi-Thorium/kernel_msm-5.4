@@ -5572,18 +5572,25 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 
 	pr_info("%s: line %d\n", __func__, __LINE__);
 	iommu_device_set_ops(&smmu->iommu, &arm_smmu_ops.iommu_ops);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	iommu_device_set_fwnode(&smmu->iommu, dev->fwnode);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	err = iommu_device_register(&smmu->iommu);
 
 	if (err) {
 		dev_err(dev, "Failed to register iommu\n");
 		return err;
 	}
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	platform_set_drvdata(pdev, smmu);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_device_reset(smmu);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_test_smr_masks(smmu);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_interrupt_selftest(smmu);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_power_off(smmu, smmu->pwr);
 
 	/*
@@ -5605,6 +5612,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	 * power resources, by always keeping them on.
 	 *
 	 */
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (IS_ENABLED(CONFIG_ARM_SMMU_POWER_ALWAYS_ON))
 		arm_smmu_power_on(smmu->pwr);
 
@@ -5614,6 +5622,7 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	 * can serve as an ideal proxy for that decision. So, conditionally
 	 * enable pm_runtime.
 	 */
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (dev->pm_domain) {
 		pm_runtime_set_active(dev);
 		pm_runtime_enable(dev);
@@ -5624,22 +5633,27 @@ static int arm_smmu_device_dt_probe(struct platform_device *pdev)
 	 * any device which might need it, so we want the bus ops in place
 	 * ready to handle default domain setup as soon as any SMMU exists.
 	 */
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (!using_legacy_binding)
 		return arm_smmu_bus_init(&arm_smmu_ops.iommu_ops);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	err = register_regulator_notifier(smmu);
 	if (err)
 		goto out_power_off;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	return 0;
 
 out_power_off:
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_power_off(smmu, smmu->pwr);
 	spin_lock(&arm_smmu_devices_lock);
 	list_del(&smmu->list);
 	spin_unlock(&arm_smmu_devices_lock);
 
 out_exit_power_resources:
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	arm_smmu_exit_power_resources(smmu->pwr);
 
 	return err;
