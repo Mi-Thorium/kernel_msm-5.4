@@ -1912,7 +1912,6 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 	if (ret)
 		return ERR_PTR(-EPROBE_DEFER);
 
-	devm_kfree(smmu->dev, smmu);
 	return &data->smmu;
 }
 
@@ -1927,7 +1926,6 @@ struct arm_smmu_device *qcom_smmu_impl_init(struct arm_smmu_device *smmu)
 	qsmmu->smmu = *smmu;
 
 	qsmmu->smmu.impl = &qcom_smmu_impl;
-	devm_kfree(smmu->dev, smmu);
 
 	return &qsmmu->smmu;
 }
@@ -1953,6 +1951,5 @@ struct arm_smmu_device *qsmmuv2_impl_init(struct arm_smmu_device *smmu)
 	if (ret)
 		return ERR_PTR(ret);
 
-	devm_kfree(smmu->dev, smmu);
 	return &data->smmu;
 }
