@@ -1509,6 +1509,7 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 
 	phys_soft = arm_smmu_iova_to_phys(domain, iova);
 	frsynra = arm_smmu_gr1_read(smmu, ARM_SMMU_GR1_CBFRSYNRA(cfg->cbndx));
+	frsynra &= CBFRSYNRA_SID_MASK;
 	tmp = report_iommu_fault(domain, smmu->dev, iova, flags);
 	if (!tmp || (tmp == -EBUSY)) {
 		dev_dbg(smmu->dev,
@@ -1533,11 +1534,6 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 			dev_err(smmu->dev,
 				"Unhandled context fault: iova=0x%08lx, cb=%d, fsr=0x%x, fsynr0=0x%x, fsynr1=0x%x\n",
 				iova, cfg->cbndx, fsr, fsynr0, fsynr1);
-
-			dev_err(smmu->dev, "SSD=0x%x SID=0x%x\n",
-				FIELD_GET(CBFRSYNRA_SSD, frsynra),
-				FIELD_GET(CBFRSYNRA_SID, frsynra));
-
 			dev_err(smmu->dev,
 				"Client info: BID=0x%lx, PID=0x%lx, MID=0x%lx\n",
 				FIELD_GET(FSYNR1_BID, fsynr1),
@@ -1559,6 +1555,7 @@ static irqreturn_t arm_smmu_context_fault(int irq, void *dev)
 					&phys_atos);
 			else
 				dev_err(smmu->dev, "hard iova-to-phys (ATOS) failed\n");
+			dev_err(smmu->dev, "SID=0x%x\n", frsynra);
 		}
 		ret = IRQ_HANDLED;
 		resume = RESUME_TERMINATE;

@@ -1663,7 +1663,8 @@ static phys_addr_t qsmmuv500_iova_to_phys_hard(
 		 */
 		frsynra = arm_smmu_gr1_read(smmu,
 					    ARM_SMMU_GR1_CBFRSYNRA(cfg->cbndx));
-		sid = FIELD_GET(CBFRSYNRA_SID, frsynra);
+		frsynra &= CBFRSYNRA_SID_MASK;
+		sid      = frsynra;
 	}
 	return qsmmuv500_iova_to_phys(smmu_domain, iova, sid, trans_flags);
 }
