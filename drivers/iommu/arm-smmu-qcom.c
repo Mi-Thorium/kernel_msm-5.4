@@ -1871,47 +1871,60 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 	struct platform_device *pdev;
 	int ret;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	data = devm_kzalloc(dev, sizeof(*data), GFP_KERNEL);
 	if (!data)
 		return ERR_PTR(-ENOMEM);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	INIT_LIST_HEAD(&data->tbus);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	pdev = to_platform_device(dev);
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	res = platform_get_resource_byname(pdev, IORESOURCE_MEM, "tcu-base");
 	if (!res) {
 		dev_err(dev, "Unable to get the tcu-base\n");
 		return ERR_PTR(-EINVAL);
 	}
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	data->tcu_base = devm_ioremap_resource(dev, res);
 	if (IS_ERR(data->tcu_base))
 		return ERR_CAST(data->tcu_base);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	spin_lock_init(&data->atos_lock);
 	data->smmu = *smmu;
 	data->smmu.impl = &qsmmuv500_impl;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	qsmmuv500_tcu_testbus_init(&data->smmu);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	INIT_WORK(&data->outstanding_tnx_work,
 		  qsmmuv500_log_outstanding_transactions);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	if (arm_smmu_is_static_cb(smmu))
 		return &data->smmu;
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	ret = qsmmuv500_read_actlr_tbl(data);
 	if (ret)
 		return ERR_PTR(ret);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
 	if (ret)
 		return ERR_PTR(ret);
 
 	/* Attempt to register child devices */
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	ret = device_for_each_child(dev, data, qsmmuv500_tbu_register);
 	if (ret)
 		return ERR_PTR(-EPROBE_DEFER);
 
+	pr_info("%s: line %d\n", __func__, __LINE__);
 	return &data->smmu;
 }
 
