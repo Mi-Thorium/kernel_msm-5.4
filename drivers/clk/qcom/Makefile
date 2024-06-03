@@ -17,7 +17,11 @@ clk-qcom-$(CONFIG_KRAIT_CLOCKS) += clk-krait.o
 clk-qcom-y += clk-hfpll.o
 clk-qcom-y += reset.o
 clk-qcom-y += clk-debug.o
+ifeq ($(CONFIG_QCOM_BUS_SCALING),y)
 clk-qcom-y += gdsc-regulator.o
+else
+clk-qcom-y += gdsc-regulator_legacy.o
+endif
 clk-qcom-y += clk-voter.o
 clk-qcom-$(CONFIG_QCOM_GDSC) += gdsc.o
 obj-$(CONFIG_COMMON_CLK_QCOM) += clk-dummy.o
