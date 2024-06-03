@@ -1826,6 +1826,9 @@ static int qsmmuv500_cfg_probe(struct arm_smmu_device *smmu)
 
 	data->version = readl_relaxed(data->tcu_base + TCU_HW_VERSION_HLOS1);
 
+	if (arm_smmu_is_static_cb(smmu))
+		return 0;
+
 	val = arm_smmu_gr0_read(smmu, ARM_SMMU_GR0_sACR);
 	val &= ~ARM_MMU500_ACR_CACHE_LOCK;
 	arm_smmu_gr0_write(smmu, ARM_SMMU_GR0_sACR, val);
