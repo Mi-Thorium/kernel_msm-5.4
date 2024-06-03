@@ -1893,15 +1893,15 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 
 	qsmmuv500_tcu_testbus_init(&data->smmu);
 
+	INIT_WORK(&data->outstanding_tnx_work,
+		  qsmmuv500_log_outstanding_transactions);
+
 	if (arm_smmu_is_static_cb(smmu))
 		return &data->smmu;
 
 	ret = qsmmuv500_read_actlr_tbl(data);
 	if (ret)
 		return ERR_PTR(ret);
-
-	INIT_WORK(&data->outstanding_tnx_work,
-		  qsmmuv500_log_outstanding_transactions);
 
 	ret = of_platform_populate(dev->of_node, NULL, NULL, dev);
 	if (ret)
