@@ -1198,9 +1198,20 @@ static void qsmmuv500_tlb_sync_timeout(struct arm_smmu_device *smmu)
 	dev_err_ratelimited(smmu->dev,
 			    "TLB sync timed out -- SMMU may be deadlocked\n");
 
+/*
 	sync_inv_ack = arm_smmu_readl(smmu,
 				      ARM_SMMU_IMPL_DEF0,
 				      ARM_SMMU_STATS_SYNC_INV_TBU_ACK);
+*/
+	ret = qcom_scm_io_readl((unsigned long)(smmu->phys_addr +
+				ARM_SMMU_STATS_SYNC_INV_TBU_ACK), &sync_inv_ack);
+	if (ret) {
+		dev_err_ratelimited(smmu->dev,
+				    "SCM read of sync_inv_ack fails: %d\n",
+				    ret);
+		goto out;
+	}
+
 	ret = qcom_scm_io_readl((unsigned long)(smmu->phys_addr +
 				ARM_SMMU_TBU_PWR_STATUS), &tbu_pwr_status);
 	if (ret) {
