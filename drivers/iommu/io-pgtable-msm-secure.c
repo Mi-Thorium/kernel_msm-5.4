@@ -24,8 +24,6 @@
 
 #include <linux/io-pgtable.h>
 
-#define IOMMU_SECURE_PTBL_SIZE  3
-#define IOMMU_SECURE_PTBL_INIT  4
 #define IOMMU_SECURE_MAP2_FLAT 0x12
 #define IOMMU_SECURE_UNMAP2_FLAT 0x13
 #define IOMMU_TLBINVAL_FLAG 0x00000001
@@ -47,26 +45,16 @@ struct msm_secure_io_pgtable {
 
 int msm_iommu_sec_pgtbl_init(void)
 {
-	int psize[2] = {0, 0};
+	size_t psize = 0;
 	unsigned int spare = 0;
-	int ret, ptbl_ret = 0;
+	int ret = 0;
 	struct device dev = {0};
 	void *cpu_addr;
 	dma_addr_t paddr;
 	unsigned long attrs = 0;
 
-	struct qcom_scm_desc desc = {
-		.svc = QCOM_SCM_SVC_MP,
-		.cmd = IOMMU_SECURE_PTBL_SIZE,
-		.owner = ARM_SMCCC_OWNER_SIP,
-	};
-
-	desc.args[0] = spare;
-	desc.arginfo = QCOM_SCM_ARGS(1);
-	ret = scm_call2(&desc);
-	psize[0] = desc.res[0];
-	psize[1] = desc.res[1];
-	if (ret || psize[1]) {
+	ret = qcom_scm_iommu_secure_ptbl_size(spare, &psize);
+	if (ret) {
 		pr_err("scm call IOMMU_SECURE_PTBL_SIZE failed\n");
 		return ret;
 	}
@@ -75,30 +63,16 @@ int msm_iommu_sec_pgtbl_init(void)
 	attrs = DMA_ATTR_NO_KERNEL_MAPPING;
 	dev.coherent_dma_mask = DMA_BIT_MASK(sizeof(dma_addr_t) * 8);
 	arch_setup_dma_ops(&dev, 0, 0, NULL, 0);
-	cpu_addr = dma_alloc_attrs(&dev, psize[0], &paddr, GFP_KERNEL, attrs);
+	cpu_addr = dma_alloc_attrs(&dev, psize, &paddr, GFP_KERNEL, attrs);
 	if (!cpu_addr) {
-		pr_err("%s: Failed to allocate %d bytes for PTBL\n",
-				__func__, psize[0]);
+		pr_err("%s: Failed to allocate %zu bytes for PTBL\n",
+				__func__, psize);
 		return -ENOMEM;
 	}
 
-	desc.cmd = IOMMU_SECURE_PTBL_INIT;
-
-	desc.args[0] = paddr;
-	desc.args[1] = psize[0];
-	desc.args[2] = 0;
-	desc.arginfo = QCOM_SCM_ARGS(3, QCOM_SCM_RW, QCOM_SCM_VAL, QCOM_SCM_VAL);
-
-	ret = scm_call2(&desc);
-	ptbl_ret = desc.res[0];
-
+	ret = qcom_scm_iommu_secure_ptbl_init(paddr, psize, 0);
 	if (ret) {
 		pr_err("scm call IOMMU_SECURE_PTBL_INIT failed\n");
-		return ret;
-	}
-
-	if (ptbl_ret) {
-		pr_err("scm call IOMMU_SECURE_PTBL_INIT extended ret fail\n");
 		return ret;
 	}
 
