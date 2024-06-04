@@ -73,19 +73,28 @@ static void qcom_scm_clk_disable(void)
 
 int scm_call2(struct qcom_scm_desc *desc)
 {
-	return qcom_scm_call(__scm ? __scm->dev : NULL, desc);
+	int ret = qcom_scm_call(__scm ? __scm->dev : NULL, desc);
+	if (ret)
+		WARN(1, "%s failed\n", __func__);
+	return ret;
 }
 EXPORT_SYMBOL(scm_call2);
 
 int scm_call2_atomic(struct qcom_scm_desc *desc)
 {
-	return qcom_scm_call_atomic(__scm ? __scm->dev : NULL, desc);
+	int ret = qcom_scm_call_atomic(__scm ? __scm->dev : NULL, desc);
+	if (ret)
+		WARN(1, "%s failed\n", __func__);
+	return ret;
 }
 EXPORT_SYMBOL(scm_call2_atomic);
 
 int scm_call2_noretry(struct qcom_scm_desc *desc)
 {
-	return qcom_scm_call_noretry(__scm ? __scm->dev : NULL, desc);
+	int ret = qcom_scm_call_noretry(__scm ? __scm->dev : NULL, desc);
+	if (ret)
+		WARN(1, "%s failed\n", __func__);
+	return ret;
 }
 EXPORT_SYMBOL(scm_call2_noretry);
 
