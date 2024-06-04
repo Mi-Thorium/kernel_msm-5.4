@@ -1237,8 +1237,10 @@ static int iommu_init_dma_resources(struct device *dev,
 		dev->dma_ops = fast_smmu_get_dma_ops();
 	} else {
 		ret = iommu_dma_init_domain(domain, dma_base, size, dev);
-		if (!ret)
+		if (!ret) {
+			WARN(1, "dev->dma_ops = &iommu_dma_ops\n");
 			dev->dma_ops = &iommu_dma_ops;
+		}
 	}
 
 	return ret;
