@@ -52,6 +52,11 @@ static inline unsigned int order_to_size(int order)
 	return PAGE_SIZE << order;
 }
 
+struct pages_mem {
+	struct page **pages;
+	u32 size;
+};
+
 static int ion_heap_is_msm_system_heap_type(enum ion_heap_type type)
 {
 	return type == ((enum ion_heap_type)ION_HEAP_TYPE_MSM_SYSTEM);
@@ -254,11 +259,13 @@ force_alloc:
 	return alloc_largest_available(heap, buffer, size, max_order);
 }
 
-static void process_info(struct page_info *info,
+static unsigned int process_info(struct page_info *info,
 			 struct scatterlist *sg,
-			 struct scatterlist *sg_sync)
+			 struct scatterlist *sg_sync,
+			 struct pages_mem *data, unsigned int i)
 {
 	struct page *page = info->page;
+	unsigned int j;
 
 	if (sg_sync) {
 		sg_set_page(sg_sync, page, (1 << info->order) * PAGE_SIZE, 0);
@@ -271,9 +278,45 @@ static void process_info(struct page_info *info,
 	 * on the currently targeted hardware.
 	 */
 	sg_dma_address(sg) = page_to_phys(page);
-
+	if (data) {
+		for (j = 0; j < (1 << info->order); ++j)
+			data->pages[i++] = nth_page(page, j);
+	}
 	list_del(&info->list);
 	kfree(info);
+	return i;
+}
+
+static int ion_heap_alloc_pages_mem(struct pages_mem *pages_mem)
+{
+	struct page **pages;
+	unsigned int page_tbl_size;
+
+	page_tbl_size = sizeof(struct page *) * (pages_mem->size >> PAGE_SHIFT);
+	if (page_tbl_size > SZ_8K) {
+		/*
+		 * Do fallback to ensure we have a balance between
+		 * performance and availability.
+		 */
+		pages = kmalloc(page_tbl_size,
+				__GFP_COMP | __GFP_NORETRY |
+				__GFP_NOWARN);
+		if (!pages)
+			pages = vmalloc(page_tbl_size);
+	} else {
+		pages = kmalloc(page_tbl_size, GFP_KERNEL);
+	}
+
+	if (!pages)
+		return -ENOMEM;
+
+	pages_mem->pages = pages;
+	return 0;
+}
+
+static void ion_heap_free_pages_mem(struct pages_mem *pages_mem)
+{
+	kvfree(pages_mem->pages);
 }
 
 static bool check_valid_vmid(int dest_vmid, struct ion_msm_system_heap *sys_heap)
@@ -332,6 +375,7 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 	unsigned int nents_sync = 0;
 	unsigned long size_remaining = PAGE_ALIGN(size);
 	unsigned int max_order = orders[0];
+	struct pages_mem data;
 	unsigned int sz;
 	int vmid = get_secure_vmid(buffer->flags);
 
@@ -358,6 +402,7 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 		return -EINVAL;
 	}
 
+	data.size = 0;
 	INIT_LIST_HEAD(&pages);
 	INIT_LIST_HEAD(&pages_from_pool);
 
@@ -388,6 +433,7 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 			list_add_tail(&info->list, &pages_from_pool);
 		} else {
 			list_add_tail(&info->list, &pages);
+			data.size += sz;
 			++nents_sync;
 		}
 		size_remaining -= sz;
@@ -395,10 +441,15 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 		i++;
 	}
 
+	ret = ion_heap_alloc_pages_mem(&data);
+
+	if (ret)
+		goto err;
+
 	table = kzalloc(sizeof(*table), GFP_KERNEL);
 	if (!table) {
 		ret = -ENOMEM;
-		goto err;
+		goto err_free_data_pages;
 	}
 
 	ret = sg_alloc_table(table, i, GFP_KERNEL);
@@ -411,6 +462,7 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 			goto err_free_sg;
 	}
 
+	i = 0;
 	sg = table->sgl;
 	sg_sync = table_sync.sgl;
 
@@ -426,16 +478,16 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 						    struct page_info, list);
 		if (info && tmp_info) {
 			if (info->order >= tmp_info->order) {
-				process_info(info, sg, sg_sync);
+				i = process_info(info, sg, sg_sync, &data, i);
 				sg_sync = sg_next(sg_sync);
 			} else {
-				process_info(tmp_info, sg, NULL);
+				i = process_info(tmp_info, sg, 0, 0, i);
 			}
 		} else if (info) {
-			process_info(info, sg, sg_sync);
+			i = process_info(info, sg, sg_sync, &data, i);
 			sg_sync = sg_next(sg_sync);
 		} else if (tmp_info) {
-			process_info(tmp_info, sg, NULL);
+			i = process_info(tmp_info, sg, 0, 0, i);
 		}
 		sg = sg_next(sg);
 
@@ -462,6 +514,7 @@ static int ion_msm_system_heap_allocate(struct ion_heap *heap,
 	}
 	buffer->priv_virt = lock_state;
 
+	ion_heap_free_pages_mem(&data);
 	ion_prepare_sgl_for_force_dma_sync(buffer->sg_table);
 	return 0;
 
@@ -487,6 +540,8 @@ err_free_sg:
 	sg_free_table(table);
 err1:
 	kfree(table);
+err_free_data_pages:
+	ion_heap_free_pages_mem(&data);
 err:
 	list_for_each_entry_safe(info, tmp_info, &pages, list) {
 		free_buffer_page(sys_heap, buffer, info->page, info->order);
