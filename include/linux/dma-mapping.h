@@ -349,10 +349,8 @@ static inline dma_addr_t dma_map_page_attrs(struct device *dev,
 	BUG_ON(!valid_dma_direction(dir));
 	if (dma_is_direct(ops))
 		addr = dma_direct_map_page(dev, page, offset, size, dir, attrs);
-	else {
-		WARN(1, "dma_map_page_attrs !dma_is_direct");
+	else
 		addr = ops->map_page(dev, page, offset, size, dir, attrs);
-	}
 	debug_dma_map_page(dev, page, offset, size, dir, addr);
 
 	return addr;

@@ -275,10 +275,8 @@ static bool arm_smmu_has_secure_vmid(struct arm_smmu_domain *smmu_domain)
 
 static bool arm_smmu_is_slave_side_secure(struct arm_smmu_domain *smmu_domain)
 {
-	bool yeah = arm_smmu_has_secure_vmid(smmu_domain) &&
+	return arm_smmu_has_secure_vmid(smmu_domain) &&
 			smmu_domain->slave_side_secure;
-	pr_info("%s is %s\n", __func__, yeah ? "true" : "false");
-	return yeah;
 }
 
 static void arm_smmu_secure_domain_lock(struct arm_smmu_domain *smmu_domain)
