@@ -3,6 +3,10 @@
  * Copyright (c) 2019-2020, The Linux Foundation. All rights reserved.
  */
 
+#if 1
+#include "ion_kernel.h"
+#include <uapi/linux/msm_ion.h>
+#else
 #ifndef _MSM_ION_H
 #define _MSM_ION_H
 
@@ -112,3 +116,4 @@ static inline void msm_ion_dma_buf_unlock(struct dma_buf *dmabuf)
 
 #endif /* CONFIG_ION_MSM_HEAPS */
 #endif /* _MSM_ION_H */
+#endif

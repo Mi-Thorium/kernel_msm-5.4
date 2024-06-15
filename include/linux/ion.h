@@ -3,6 +3,9 @@
  * Copyright (c) 2019, The Linux Foundation. All rights reserved.
  */
 
+#if 1
+#include "ion_kernel.h"
+#else
 #ifndef _ION_KERNEL_H
 #define _ION_KERNEL_H
 
@@ -417,3 +420,4 @@ static inline size_t ion_query_heaps_kernel(struct ion_heap_data *hdata,
 }
 #endif /* CONFIG_ION */
 #endif /* _ION_KERNEL_H */
+#endif
