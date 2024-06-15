@@ -32,7 +32,7 @@
 #include <linux/bitops.h>
 #include <linux/msm_dma_iommu_mapping.h>
 #define CREATE_TRACE_POINTS
-#include <trace/events/ion-legacy.h>
+//#include <trace/events/ion-legacy.h>
 #include <soc/qcom/secure_buffer.h>
 
 #include "ion.h"
@@ -335,20 +335,6 @@ static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
 		map_attrs |= DMA_ATTR_SKIP_CPU_SYNC;
 
 	mutex_lock(&buffer->lock);
-	if (map_attrs & DMA_ATTR_SKIP_CPU_SYNC)
-		trace_ion_dma_map_cmo_skip(attachment->dev,
-					   attachment->dmabuf->buf_name,
-					   ion_buffer_cached(buffer),
-					   hlos_accessible_buffer(buffer),
-					   attachment->dma_map_attrs,
-					   direction);
-	else
-		trace_ion_dma_map_cmo_apply(attachment->dev,
-					    attachment->dmabuf->buf_name,
-					    ion_buffer_cached(buffer),
-					    hlos_accessible_buffer(buffer),
-					    attachment->dma_map_attrs,
-					    direction);
 
 	if (map_attrs & DMA_ATTR_DELAYED_UNMAP) {
 		count = msm_dma_map_sg_attrs(attachment->dev, table->sgl,
@@ -384,20 +370,6 @@ static void ion_unmap_dma_buf(struct dma_buf_attachment *attachment,
 		map_attrs |= DMA_ATTR_SKIP_CPU_SYNC;
 
 	mutex_lock(&buffer->lock);
-	if (map_attrs & DMA_ATTR_SKIP_CPU_SYNC)
-		trace_ion_dma_unmap_cmo_skip(attachment->dev,
-					     attachment->dmabuf->buf_name,
-					     ion_buffer_cached(buffer),
-					     hlos_accessible_buffer(buffer),
-					     attachment->dma_map_attrs,
-					     direction);
-	else
-		trace_ion_dma_unmap_cmo_apply(attachment->dev,
-					      attachment->dmabuf->buf_name,
-					      ion_buffer_cached(buffer),
-					      hlos_accessible_buffer(buffer),
-					      attachment->dma_map_attrs,
-					      direction);
 
 	if (map_attrs & DMA_ATTR_DELAYED_UNMAP)
 		msm_dma_unmap_sg_attrs(attachment->dev, table->sgl,
@@ -638,18 +610,11 @@ static int __ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf,
 	int ret = 0;
 
 	if (!hlos_accessible_buffer(buffer)) {
-		trace_ion_begin_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						    ion_buffer_cached(buffer),
-						    false, direction,
-						    sync_only_mapped);
 		ret = -EPERM;
 		goto out;
 	}
 
 	if (!(buffer->flags & ION_FLAG_CACHED)) {
-		trace_ion_begin_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						    false, true, direction,
-						    sync_only_mapped);
 		goto out;
 	}
 
@@ -667,18 +632,6 @@ static int __ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf,
 			dma_sync_sg_for_cpu(dev, table->sgl,
 					    table->nents, direction);
 
-		if (!ret)
-			trace_ion_begin_cpu_access_cmo_apply(dev,
-							     dmabuf->buf_name,
-							     true, true,
-							     direction,
-							     sync_only_mapped);
-		else
-			trace_ion_begin_cpu_access_cmo_skip(dev,
-							    dmabuf->buf_name,
-							    true, true,
-							    direction,
-							    sync_only_mapped);
 		mutex_unlock(&buffer->lock);
 		goto out;
 	}
@@ -687,11 +640,6 @@ static int __ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf,
 		int tmp = 0;
 
 		if (!a->dma_mapped) {
-			trace_ion_begin_cpu_access_notmapped(a->dev,
-							     dmabuf->buf_name,
-							     true, true,
-							     direction,
-							     sync_only_mapped);
 			continue;
 		}
 
@@ -705,17 +653,7 @@ static int __ion_dma_buf_begin_cpu_access(struct dma_buf *dmabuf,
 					    a->table->nents, direction);
 
 		if (!tmp) {
-			trace_ion_begin_cpu_access_cmo_apply(a->dev,
-							     dmabuf->buf_name,
-							     true, true,
-							     direction,
-							     sync_only_mapped);
 		} else {
-			trace_ion_begin_cpu_access_cmo_skip(a->dev,
-							    dmabuf->buf_name,
-							    true, true,
-							    direction,
-							    sync_only_mapped);
 			ret = tmp;
 		}
 
@@ -734,18 +672,11 @@ static int __ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf,
 	int ret = 0;
 
 	if (!hlos_accessible_buffer(buffer)) {
-		trace_ion_end_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						  ion_buffer_cached(buffer),
-						  false, direction,
-						  sync_only_mapped);
 		ret = -EPERM;
 		goto out;
 	}
 
 	if (!(buffer->flags & ION_FLAG_CACHED)) {
-		trace_ion_end_cpu_access_cmo_skip(NULL, dmabuf->buf_name, false,
-						  true, direction,
-						  sync_only_mapped);
 		goto out;
 	}
 
@@ -762,16 +693,6 @@ static int __ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf,
 			dma_sync_sg_for_device(dev, table->sgl,
 					       table->nents, direction);
 
-		if (!ret)
-			trace_ion_end_cpu_access_cmo_apply(dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction,
-							   sync_only_mapped);
-		else
-			trace_ion_end_cpu_access_cmo_skip(dev, dmabuf->buf_name,
-							  true, true, direction,
-							  sync_only_mapped);
 		mutex_unlock(&buffer->lock);
 		goto out;
 	}
@@ -780,11 +701,6 @@ static int __ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf,
 		int tmp = 0;
 
 		if (!a->dma_mapped) {
-			trace_ion_end_cpu_access_notmapped(a->dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction,
-							   sync_only_mapped);
 			continue;
 		}
 
@@ -798,16 +714,7 @@ static int __ion_dma_buf_end_cpu_access(struct dma_buf *dmabuf,
 					       a->table->nents, direction);
 
 		if (!tmp) {
-			trace_ion_end_cpu_access_cmo_apply(a->dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction,
-							   sync_only_mapped);
 		} else {
-			trace_ion_end_cpu_access_cmo_skip(a->dev,
-							  dmabuf->buf_name,
-							  true, true, direction,
-							  sync_only_mapped);
 			ret = tmp;
 		}
 	}
@@ -851,18 +758,11 @@ static int ion_dma_buf_begin_cpu_access_partial(struct dma_buf *dmabuf,
 	int ret = 0;
 
 	if (!hlos_accessible_buffer(buffer)) {
-		trace_ion_begin_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						    ion_buffer_cached(buffer),
-						    false, dir,
-						    false);
 		ret = -EPERM;
 		goto out;
 	}
 
 	if (!(buffer->flags & ION_FLAG_CACHED)) {
-		trace_ion_begin_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						    false, true, dir,
-						    false);
 		goto out;
 	}
 
@@ -874,16 +774,6 @@ static int ion_dma_buf_begin_cpu_access_partial(struct dma_buf *dmabuf,
 		ret = ion_sgl_sync_range(dev, table->sgl, table->nents,
 					 offset, len, dir, true);
 
-		if (!ret)
-			trace_ion_begin_cpu_access_cmo_apply(dev,
-							     dmabuf->buf_name,
-							     true, true, dir,
-							     false);
-		else
-			trace_ion_begin_cpu_access_cmo_skip(dev,
-							    dmabuf->buf_name,
-							    true, true, dir,
-							    false);
 		mutex_unlock(&buffer->lock);
 		goto out;
 	}
@@ -892,11 +782,6 @@ static int ion_dma_buf_begin_cpu_access_partial(struct dma_buf *dmabuf,
 		int tmp = 0;
 
 		if (!a->dma_mapped) {
-			trace_ion_begin_cpu_access_notmapped(a->dev,
-							     dmabuf->buf_name,
-							     true, true,
-							     dir,
-							     false);
 			continue;
 		}
 
@@ -904,15 +789,7 @@ static int ion_dma_buf_begin_cpu_access_partial(struct dma_buf *dmabuf,
 					 offset, len, dir, true);
 
 		if (!tmp) {
-			trace_ion_begin_cpu_access_cmo_apply(a->dev,
-							     dmabuf->buf_name,
-							     true, true, dir,
-							     false);
 		} else {
-			trace_ion_begin_cpu_access_cmo_skip(a->dev,
-							    dmabuf->buf_name,
-							    true, true, dir,
-							    false);
 			ret = tmp;
 		}
 	}
@@ -932,18 +809,11 @@ static int ion_dma_buf_end_cpu_access_partial(struct dma_buf *dmabuf,
 	int ret = 0;
 
 	if (!hlos_accessible_buffer(buffer)) {
-		trace_ion_end_cpu_access_cmo_skip(NULL, dmabuf->buf_name,
-						  ion_buffer_cached(buffer),
-						  false, direction,
-						  false);
 		ret = -EPERM;
 		goto out;
 	}
 
 	if (!(buffer->flags & ION_FLAG_CACHED)) {
-		trace_ion_end_cpu_access_cmo_skip(NULL, dmabuf->buf_name, false,
-						  true, direction,
-						  false);
 		goto out;
 	}
 
@@ -955,16 +825,6 @@ static int ion_dma_buf_end_cpu_access_partial(struct dma_buf *dmabuf,
 		ret = ion_sgl_sync_range(dev, table->sgl, table->nents,
 					 offset, len, direction, false);
 
-		if (!ret)
-			trace_ion_end_cpu_access_cmo_apply(dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction, false);
-		else
-			trace_ion_end_cpu_access_cmo_skip(dev, dmabuf->buf_name,
-							  true, true,
-							  direction, false);
-
 		mutex_unlock(&buffer->lock);
 		goto out;
 	}
@@ -973,11 +833,6 @@ static int ion_dma_buf_end_cpu_access_partial(struct dma_buf *dmabuf,
 		int tmp = 0;
 
 		if (!a->dma_mapped) {
-			trace_ion_end_cpu_access_notmapped(a->dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction,
-							   false);
 			continue;
 		}
 
@@ -985,16 +840,8 @@ static int ion_dma_buf_end_cpu_access_partial(struct dma_buf *dmabuf,
 					 offset, len, direction, false);
 
 		if (!tmp) {
-			trace_ion_end_cpu_access_cmo_apply(a->dev,
-							   dmabuf->buf_name,
-							   true, true,
-							   direction, false);
 
 		} else {
-			trace_ion_end_cpu_access_cmo_skip(a->dev,
-							  dmabuf->buf_name,
-							  true, true, direction,
-							  false);
 			ret = tmp;
 		}
 	}
