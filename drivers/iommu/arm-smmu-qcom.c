@@ -1882,7 +1882,7 @@ struct arm_smmu_device *qsmmuv500_impl_init(struct arm_smmu_device *smmu)
 		dev_err(dev, "Unable to get the tcu-base\n");
 		return ERR_PTR(-EINVAL);
 	}
-	data->tcu_base = devm_ioremap_resource(dev, res);
+	data->tcu_base = devm_ioremap(dev, res->start, resource_size(res));
 	if (IS_ERR(data->tcu_base))
 		return ERR_CAST(data->tcu_base);
 
