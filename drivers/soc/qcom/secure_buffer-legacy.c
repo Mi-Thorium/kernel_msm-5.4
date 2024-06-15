@@ -14,7 +14,7 @@
 #include <soc/qcom/scm.h>
 #include <soc/qcom/secure_buffer-legacy.h>
 
-#define CREATE_TRACE_POINTS
+//#define CREATE_TRACE_POINTS
 #include "trace_secure_buffer-legacy.h"
 
 DEFINE_MUTEX(secure_buffer_mutex);
@@ -61,7 +61,7 @@ static int secure_buffer_change_chunk(u32 chunks,
 				SCM_VAL);
 
 	kmap_flush_unused();
-	kmap_atomic_flush_unused();
+	//kmap_atomic_flush_unused();
 
 	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
 			MEM_PROTECT_LOCK_ID2_FLAT), &desc);
