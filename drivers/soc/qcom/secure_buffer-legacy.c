@@ -11,7 +11,7 @@
 #include <linux/scatterlist.h>
 #include <linux/slab.h>
 #include <linux/dma-mapping.h>
-#include <soc/qcom/scm.h>
+#include <linux/qcom_scm.h>
 #include <soc/qcom/secure_buffer-legacy.h>
 
 //#define CREATE_TRACE_POINTS
@@ -48,7 +48,11 @@ static int secure_buffer_change_chunk(u32 chunks,
 	struct cp2_lock_req request;
 	u32 resp;
 	int ret;
-	struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = MEM_PROTECT_LOCK_ID2_FLAT,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 
 	desc.args[0] = request.chunks.chunk_list = chunks;
 	desc.args[1] = request.chunks.chunk_list_size = nchunks;
@@ -57,15 +61,14 @@ static int secure_buffer_change_chunk(u32 chunks,
 	desc.args[3] = request.mem_usage = 0;
 	desc.args[4] = request.lock = lock;
 	desc.args[5] = 0;
-	desc.arginfo = SCM_ARGS(6, SCM_RW, SCM_VAL, SCM_VAL, SCM_VAL, SCM_VAL,
-				SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(6, QCOM_SCM_RW, QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL, QCOM_SCM_VAL,
+				QCOM_SCM_VAL);
 
 	kmap_flush_unused();
 	//kmap_atomic_flush_unused();
 
-	ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-			MEM_PROTECT_LOCK_ID2_FLAT), &desc);
-	resp = desc.ret[0];
+	ret = scm_call2(&desc);
+	resp = desc.res[0];
 
 	return ret;
 }
@@ -215,7 +218,7 @@ static unsigned int get_batches_from_sgl(struct mem_prot_info *sg_table_copy,
 	return i;
 }
 
-static int batched_hyp_assign(struct sg_table *table, struct scm_desc *desc)
+static int batched_hyp_assign(struct sg_table *table, struct qcom_scm_desc *desc)
 {
 	unsigned int entries_size;
 	unsigned int batch_start = 0;
@@ -247,8 +250,7 @@ static int batched_hyp_assign(struct sg_table *table, struct scm_desc *desc)
 
 		trace_hyp_assign_batch_start(sg_table_copy, batches_processed);
 		batch_assign_start_ts = ktime_get();
-		ret = scm_call2(SCM_SIP_FNID(SCM_SVC_MP,
-				MEM_PROT_ASSIGN_ID), desc);
+		ret = scm_call2(desc);
 		trace_hyp_assign_batch_end(ret, ktime_us_delta(ktime_get(),
 					   batch_assign_start_ts));
 		i++;
@@ -284,7 +286,11 @@ static int __hyp_assign_table(struct sg_table *table,
 			int dest_nelems, bool try_lock)
 {
 	int ret = 0;
-	struct scm_desc desc = {0};
+	struct qcom_scm_desc desc = {
+		.svc = QCOM_SCM_SVC_MP,
+		.cmd = MEM_PROT_ASSIGN_ID,
+		.owner = ARM_SMCCC_OWNER_SIP,
+	};
 	u32 *source_vm_copy;
 	size_t source_vm_copy_size;
 	struct dest_vm_and_perm_info *dest_vm_copy;
@@ -328,8 +334,8 @@ static int __hyp_assign_table(struct sg_table *table,
 	desc.args[5] = dest_vm_copy_size;
 	desc.args[6] = 0;
 
-	desc.arginfo = SCM_ARGS(7, SCM_RO, SCM_VAL, SCM_RO, SCM_VAL, SCM_RO,
-				SCM_VAL, SCM_VAL);
+	desc.arginfo = QCOM_SCM_ARGS(7, QCOM_SCM_RO, QCOM_SCM_VAL, QCOM_SCM_RO, QCOM_SCM_VAL, QCOM_SCM_RO,
+				QCOM_SCM_VAL, QCOM_SCM_VAL);
 
 	dmac_flush_range(source_vm_copy,
 			 (void *)source_vm_copy + source_vm_copy_size);
@@ -438,12 +444,16 @@ const char *msm_secure_vmid_to_string(int secure_vmid)
 
 bool msm_secure_v2_is_supported(void)
 {
+	u64 version = MAKE_CP_VERSION(1, 1, 0);
 	/*
 	 * if the version is < 1.1.0 then dynamic buffer allocation is
 	 * not supported
 	 */
+	return qcom_scm_get_feat_version_cp(&version);
+/*
 	return (scm_get_feat_version(FEATURE_ID_CP) >=
 			MAKE_CP_VERSION(1, 1, 0));
+*/
 }
 
 u32 msm_secure_get_vmid_perms(u32 vmid)
