@@ -14,9 +14,6 @@
 #include <linux/qcom_scm.h>
 #include <soc/qcom/secure_buffer-legacy.h>
 
-//#define CREATE_TRACE_POINTS
-#include "trace_secure_buffer-legacy.h"
-
 DEFINE_MUTEX(secure_buffer_mutex);
 
 struct cp2_mem_chunks {
@@ -248,11 +245,8 @@ static int batched_hyp_assign(struct sg_table *table, struct qcom_scm_desc *desc
 		desc->args[0] = virt_to_phys(sg_table_copy);
 		desc->args[1] = entries_size;
 
-		trace_hyp_assign_batch_start(sg_table_copy, batches_processed);
 		batch_assign_start_ts = ktime_get();
 		ret = scm_call2(desc);
-		trace_hyp_assign_batch_end(ret, ktime_us_delta(ktime_get(),
-					   batch_assign_start_ts));
 		i++;
 		if (ret) {
 			pr_info("%s: Failed to assign memory protection, ret = %d\n",
@@ -268,7 +262,6 @@ static int batched_hyp_assign(struct sg_table *table, struct qcom_scm_desc *desc
 		batch_start += batches_processed;
 	}
 	total_delta = ktime_us_delta(ktime_get(), first_assign_ts);
-	trace_hyp_assign_end(total_delta, div64_u64(total_delta, i));
 	kfree(sg_table_copy);
 	return ret;
 }
@@ -342,8 +335,6 @@ static int __hyp_assign_table(struct sg_table *table,
 	dmac_flush_range(dest_vm_copy,
 			 (void *)dest_vm_copy + dest_vm_copy_size);
 
-	trace_hyp_assign_info(source_vm_list, source_nelems, dest_vmids,
-			      dest_perms, dest_nelems);
 	ret = batched_hyp_assign(table, &desc);
 
 	mutex_unlock(&secure_buffer_mutex);
