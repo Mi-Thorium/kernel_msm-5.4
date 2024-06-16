@@ -2089,7 +2089,7 @@ end:
  * range for the domain. If not present, and the domain doesn't use fastmap,
  * the domain geometry is unmodified.
  */
-static int arm_smmu_adjust_domain_geometry(struct device *dev,
+int arm_smmu_adjust_domain_geometry(struct device *dev,
 					   struct iommu_domain *domain)
 {
 	dma_addr_t dma_base, dma_end;
@@ -2373,6 +2373,15 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 		goto out_clear_smmu;
 	}
 
+	/* Geometry is not set use the default geometry */
+	domain->geometry.aperture_start = 0;
+	domain->geometry.aperture_end = (1UL << ias) - 1;
+	if (domain->geometry.aperture_end >= SZ_1G * 4ULL)
+		domain->geometry.aperture_end = (SZ_1G * 4ULL) - 1;
+
+	ttbr0_pgtbl_info->iova_base = domain->geometry.aperture_start;
+	ttbr0_pgtbl_info->iova_end = domain->geometry.aperture_end;
+
 	if (arm_smmu_is_slave_side_secure(smmu_domain)) {
 		ttbr0_pgtbl_info->pgtbl_cfg = (struct io_pgtable_cfg) {
 			.quirks		= quirks,
@@ -2460,9 +2469,6 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 	/* Update the domain's page sizes to reflect the page table format */
 	domain->pgsize_bitmap = ttbr0_pgtbl_info->pgtbl_cfg.pgsize_bitmap;
 	domain->geometry.aperture_end = (1UL << ias) - 1;
-	ret = arm_smmu_adjust_domain_geometry(dev, domain);
-	if (ret)
-		goto out_logger;
 	domain->geometry.force_aperture = true;
 
 	if (domain->type == IOMMU_DOMAIN_DMA) {
