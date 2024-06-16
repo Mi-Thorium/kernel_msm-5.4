@@ -340,10 +340,12 @@ static struct sg_table *ion_map_dma_buf(struct dma_buf_attachment *attachment,
 		count = msm_dma_map_sg_attrs(attachment->dev, table->sgl,
 					     table->nents, direction,
 					     attachment->dmabuf, map_attrs);
+		dev_info(attachment->dev, "%s: msm_dma_map_sg_attrs count=%d nents=%d\n", __func__, count, table->nents);
 	} else {
 		count = dma_map_sg_attrs(attachment->dev, table->sgl,
 					 table->nents, direction,
 					 map_attrs);
+		dev_info(attachment->dev, "%s: dma_map_sg_attrs count=%d nents=%d dma_is_direct(ops)=%s\n", __func__, count, table->nents, dma_is_direct(get_dma_ops(attachment->dev)) ? "true" : "false");
 	}
 
 	if (count <= 0) {
