@@ -2391,6 +2391,7 @@ static int arm_smmu_init_domain_context(struct iommu_domain *domain,
 				.cbndx = cfg->cbndx,
 			},
 			.tlb		= &smmu_domain->flush_ops->tlb,
+			.iommu_pgtable_ops = &arm_smmu_pgtable_ops,
 			.iommu_dev	= smmu->dev,
 		};
 		fmt = ARM_MSM_SECURE;
