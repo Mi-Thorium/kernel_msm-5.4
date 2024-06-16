@@ -1869,8 +1869,10 @@ static void arm_smmu_write_context_bank(struct arm_smmu_device *smmu, int idx,
 		reg |= SCTLR_HUPCF;
 
 	if ((!test_bit(DOMAIN_ATTR_S1_BYPASS, attributes) &&
-	     !test_bit(DOMAIN_ATTR_EARLY_MAP, attributes)) || !stage1)
+	     !test_bit(DOMAIN_ATTR_EARLY_MAP, attributes)) || !stage1) {
 		reg |= SCTLR_M;
+		pr_info("%s: early map SCTLR_M\n", __func__);
+	}
 	if (stage1)
 		reg |= SCTLR_S1_ASIDPNE;
 	if (IS_ENABLED(CONFIG_CPU_BIG_ENDIAN))
@@ -4423,6 +4425,7 @@ static int __arm_smmu_domain_set_attr2(struct iommu_domain *domain,
 		ret = 0;
 		if (early_map) {
 			set_bit(DOMAIN_ATTR_EARLY_MAP, smmu_domain->attributes);
+			pr_info("%s: early map on\n", __func__);
 		} else {
 			if (smmu_domain->smmu)
 				ret = arm_smmu_enable_s1_translations(
@@ -4431,6 +4434,7 @@ static int __arm_smmu_domain_set_attr2(struct iommu_domain *domain,
 			if (!ret)
 				clear_bit(DOMAIN_ATTR_EARLY_MAP,
 					  smmu_domain->attributes);
+			pr_info("%s: early map off\n", __func__);
 		}
 		break;
 	}
@@ -4542,8 +4546,12 @@ static int arm_smmu_enable_s1_translations(struct arm_smmu_domain *smmu_domain)
 	int ret;
 
 	ret = arm_smmu_power_on(smmu->pwr);
-	if (ret)
+	if (ret) {
+		pr_err("%s: early map arm_smmu_power_on failure\n", __func__);
 		return ret;
+	}
+
+	pr_info("%s: early map idx=%d\n", __func__, idx);
 
 	reg = arm_smmu_cb_read(smmu, idx, ARM_SMMU_CB_SCTLR);
 	reg |= SCTLR_M;
