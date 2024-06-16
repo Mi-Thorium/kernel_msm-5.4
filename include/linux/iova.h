@@ -72,6 +72,7 @@ struct iova_domain {
 	struct rb_node	*cached32_node; /* Save last 32-bit alloced node */
 	unsigned long	granule;	/* pfn granularity for this domain */
 	unsigned long	start_pfn;	/* Lower limit for this domain */
+	unsigned long	end_pfn;        /* Upper limit for this domain */
 	unsigned long	dma_32bit_pfn;
 	unsigned long	max32_alloc_size; /* Size of last failed allocation */
 	struct iova_fq __percpu *fq;	/* Flush Queue */

@@ -342,6 +342,7 @@ static int iommu_dma_init_domain(struct iommu_domain *domain, dma_addr_t base,
 		return 0;
 	}
 
+	iovad->end_pfn = end_pfn;
 	init_iova_domain(iovad, 1UL << order, base_pfn);
 
 	if (!cookie->fq_domain && !iommu_domain_get_attr(domain,
@@ -497,7 +498,7 @@ static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
 	 * rb_tree.
 	 */
 	limit = min_t(dma_addr_t, DMA_BIT_MASK(32) >> shift,
-						iovad->dma_32bit_pfn - 1);
+						iovad->end_pfn);
 
 	/* Try to get PCI devices a SAC address */
 	if (dma_limit > DMA_BIT_MASK(32) && dev_is_pci(dev))
@@ -505,7 +506,7 @@ static dma_addr_t iommu_dma_alloc_iova(struct iommu_domain *domain,
 
 	if (!iova) {
 		limit = min_t(dma_addr_t, dma_limit >> shift,
-						iovad->dma_32bit_pfn - 1);
+						iovad->end_pfn);
 
 		iova = alloc_iova_fast(iovad, iova_len, limit, true);
 	}
