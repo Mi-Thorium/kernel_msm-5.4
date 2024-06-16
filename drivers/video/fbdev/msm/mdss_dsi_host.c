@@ -2267,6 +2267,8 @@ end:
 	return rp->read_cnt;
 }
 
+static unsigned int mdss_dsi_cmd_dma_tx_count = 0;
+
 static int mdss_dsi_cmd_dma_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 					struct dsi_buf *tp)
 {
@@ -2275,6 +2277,9 @@ static int mdss_dsi_cmd_dma_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 	char *bp;
 	struct mdss_dsi_ctrl_pdata *mctrl = NULL;
 	int ignored = 0;	/* overflow ignored */
+
+	mdss_dsi_cmd_dma_tx_count++;
+	pr_info("mdss_dsi_cmd_dma_tx_count=%d\n", mdss_dsi_cmd_dma_tx_count);
 
 	bp = tp->data;
 
@@ -2359,6 +2364,7 @@ static int mdss_dsi_cmd_dma_tx(struct mdss_dsi_ctrl_pdata *ctrl,
 			pr_warn("%s: dma tx done but irq not triggered\n",
 				__func__);
 		} else {
+			pr_err("%s: ETIMEDOUT\n", __func__);
 			ret = -ETIMEDOUT;
 		}
 	}
