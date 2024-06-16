@@ -1868,7 +1868,7 @@ static void arm_smmu_write_context_bank(struct arm_smmu_device *smmu, int idx,
 	if (attributes && test_bit(DOMAIN_ATTR_FAULT_MODEL_HUPCF, attributes))
 		reg |= SCTLR_HUPCF;
 
-	if (!attributes || (!test_bit(DOMAIN_ATTR_S1_BYPASS, attributes) &&
+	if ((!test_bit(DOMAIN_ATTR_S1_BYPASS, attributes) &&
 	     !test_bit(DOMAIN_ATTR_EARLY_MAP, attributes)) || !stage1)
 		reg |= SCTLR_M;
 	if (stage1)
