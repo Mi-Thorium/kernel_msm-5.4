@@ -186,16 +186,23 @@ EXPORT_SYMBOL(dma_get_sgtable_attrs);
  */
 pgprot_t dma_pgprot(struct device *dev, pgprot_t prot, unsigned long attrs)
 {
-	if (force_dma_unencrypted(dev))
+	if (force_dma_unencrypted(dev)) {
+		pr_info("%s: return pgprot_decrypted\n", __func__);
 		prot = pgprot_decrypted(prot);
+	}
 	if (is_dma_coherent(dev, attrs) ||
 	    (IS_ENABLED(CONFIG_DMA_NONCOHERENT_CACHE_SYNC) &&
-             (attrs & DMA_ATTR_NON_CONSISTENT)))
+             (attrs & DMA_ATTR_NON_CONSISTENT))) {
+		pr_info("%s: return prot\n", __func__);
 		return prot;
+			 }
 #ifdef CONFIG_ARCH_HAS_DMA_WRITE_COMBINE
-	if (!is_dma_coherent(dev, attrs) || attrs & DMA_ATTR_WRITE_COMBINE)
+	if (!is_dma_coherent(dev, attrs) || attrs & DMA_ATTR_WRITE_COMBINE) {
+		pr_info("%s: return pgprot_writecombine\n", __func__);
 		return pgprot_writecombine(prot);
+	}
 #endif
+	pr_info("%s: return pgprot_dmacoherent\n", __func__);
 	return pgprot_dmacoherent(prot);
 }
 #endif /* CONFIG_MMU */

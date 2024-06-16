@@ -359,6 +359,8 @@ dma_addr_t dma_direct_map_page(struct device *dev, struct page *page,
 		return DMA_MAPPING_ERROR;
 	}
 
+	dev_info(dev, "%s: is_dma_coherent = %s\n", __func__, is_dma_coherent(dev, attrs) ? "true" : "false");
+
 	if (!is_dma_coherent(dev, attrs) && !(attrs & DMA_ATTR_SKIP_CPU_SYNC))
 		arch_sync_dma_for_device(phys, size, dir);
 	return dma_addr;

@@ -1234,8 +1234,10 @@ static int iommu_init_dma_resources(struct device *dev,
 	iommu_domain_get_attr(domain, DOMAIN_ATTR_FAST, &is_fast);
 
 	if (is_fast) {
+		dev_info(dev, "%s: is fast\n", __func__);
 		dev->dma_ops = fast_smmu_get_dma_ops();
 	} else {
+		dev_info(dev, "%s: iommu\n", __func__);
 		ret = iommu_dma_init_domain(domain, dma_base, size, dev);
 		if (!ret)
 			dev->dma_ops = &iommu_dma_ops;
@@ -1253,12 +1255,16 @@ void iommu_setup_dma_ops(struct device *dev, u64 dma_base, u64 size)
 	struct iommu_domain *domain = iommu_get_domain_for_dev(dev);
 	int s1_bypass;
 
-	if (!domain)
+	if (!domain) {
+		dev_info(dev, "%s: no domain\n", __func__);
 		goto out_err;
+	}
 
 	iommu_domain_get_attr(domain, DOMAIN_ATTR_S1_BYPASS, &s1_bypass);
-	if (s1_bypass)
+	if (s1_bypass) {
+		dev_info(dev, "%s: s1 bypass\n", __func__);
 		return;
+	}
 
 	/* Allow iommu-debug to call arch_setup_dma_ops to reconfigure itself */
 	if (domain->type != IOMMU_DOMAIN_DMA &&
