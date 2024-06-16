@@ -193,7 +193,7 @@ pgprot_t dma_pgprot(struct device *dev, pgprot_t prot, unsigned long attrs)
              (attrs & DMA_ATTR_NON_CONSISTENT)))
 		return prot;
 #ifdef CONFIG_ARCH_HAS_DMA_WRITE_COMBINE
-	if (attrs & DMA_ATTR_WRITE_COMBINE)
+	if (!is_dma_coherent(dev, attrs) || attrs & DMA_ATTR_WRITE_COMBINE)
 		return pgprot_writecombine(prot);
 #endif
 	return pgprot_dmacoherent(prot);
