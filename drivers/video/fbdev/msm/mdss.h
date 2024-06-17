@@ -313,7 +313,7 @@ struct mdss_data_type {
 	struct dss_io_data vbif_nrt_io;
 	char __iomem *mdp_base;
 
-	struct mdss_smmu_client mdss_smmu[MDSS_IOMMU_MAX_DOMAIN];
+	struct mdss_smmu_client *mdss_smmu[MDSS_IOMMU_MAX_DOMAIN];
 	struct mdss_smmu_ops smmu_ops;
 	struct mutex reg_lock;
 
@@ -397,8 +397,6 @@ struct mdss_data_type {
 	/* register bus (AHB) */
 	u32 reg_bus_hdl;
 	u32 reg_bus_usecase_ndx;
-	struct list_head reg_bus_clist;
-	struct mutex reg_bus_lock;
 	struct reg_bus_client *reg_bus_clt;
 	struct reg_bus_client *pp_reg_bus_clt;
 

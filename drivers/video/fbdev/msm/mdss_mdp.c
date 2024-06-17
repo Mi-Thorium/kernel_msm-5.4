@@ -666,6 +666,9 @@ static int mdss_mdp_bus_scale_set_quota(u64 ab_quota_rt, u64 ab_quota_nrt,
 	return rc;
 }
 
+static DEFINE_MUTEX(reg_bus_lock);
+static LIST_HEAD(reg_bus_clist);
+
 struct reg_bus_client *mdss_reg_bus_vote_client_create(char *client_name)
 {
 	struct reg_bus_client *client;
@@ -680,15 +683,15 @@ struct reg_bus_client *mdss_reg_bus_vote_client_create(char *client_name)
 	if (!client)
 		return ERR_PTR(-ENOMEM);
 
-	mutex_lock(&mdss_res->reg_bus_lock);
+	mutex_lock(&reg_bus_lock);
 	strlcpy(client->name, client_name, MAX_CLIENT_NAME_LEN);
 	client->usecase_ndx = VOTE_INDEX_DISABLE;
 	client->id = id;
 	pr_debug("bus vote client %s created:%pK id :%d\n", client_name,
 		client, id);
 	id++;
-	list_add(&client->list, &mdss_res->reg_bus_clist);
-	mutex_unlock(&mdss_res->reg_bus_lock);
+	list_add(&client->list, &reg_bus_clist);
+	mutex_unlock(&reg_bus_lock);
 
 	return client;
 }
@@ -700,9 +703,9 @@ void mdss_reg_bus_vote_client_destroy(struct reg_bus_client *client)
 	} else {
 		pr_debug("bus vote client %s destroyed:%pK id:%u\n",
 			client->name, client, client->id);
-		mutex_lock(&mdss_res->reg_bus_lock);
+		mutex_lock(&reg_bus_lock);
 		list_del_init(&client->list);
-		mutex_unlock(&mdss_res->reg_bus_lock);
+		mutex_unlock(&reg_bus_lock);
 		kfree(client);
 	}
 }
@@ -717,9 +720,9 @@ int mdss_update_reg_bus_vote(struct reg_bus_client *bus_client, u32 usecase_ndx)
 	if (!mdss_res || !mdss_res->reg_bus_hdl || !bus_client)
 		return 0;
 
-	mutex_lock(&mdss_res->reg_bus_lock);
+	mutex_lock(&reg_bus_lock);
 	bus_client->usecase_ndx = usecase_ndx;
-	list_for_each_entry_safe(client, temp_client, &mdss_res->reg_bus_clist,
+	list_for_each_entry_safe(client, temp_client, &reg_bus_clist,
 		list) {
 
 		if (client->usecase_ndx < VOTE_INDEX_MAX &&
@@ -740,7 +743,7 @@ int mdss_update_reg_bus_vote(struct reg_bus_client *bus_client, u32 usecase_ndx)
 		ret = msm_bus_scale_client_update_request(mdss_res->reg_bus_hdl,
 			max_usecase_ndx);
 
-	mutex_unlock(&mdss_res->reg_bus_lock);
+	mutex_unlock(&reg_bus_lock);
 	return ret;
 }
 
@@ -2971,23 +2974,27 @@ static int mdss_mdp_probe(struct platform_device *pdev)
 	if (mdata == NULL)
 		return -ENOMEM;
 
+	mdata->mdss_util = mdss_get_util_intf();
+	if (mdata->mdss_util == NULL) {
+		pr_err("Failed to get mdss utility functions\n");
+		return -ENODEV;
+	}
+
+	rc = mdss_smmu_init(mdata, &pdev->dev);
+	if (rc) {
+		pr_err("%s: mdss smmu init failed, deferring probe\n", __func__);
+		return -EPROBE_DEFER;
+	}
+
 	pdev->id = 0;
 	mdata->pdev = pdev;
 	platform_set_drvdata(pdev, mdata);
 	mdss_res = mdata;
 	mutex_init(&mdata->reg_lock);
-	mutex_init(&mdata->reg_bus_lock);
 	mutex_init(&mdata->bus_lock);
-	INIT_LIST_HEAD(&mdata->reg_bus_clist);
 	atomic_set(&mdata->sd_client_count, 0);
 	atomic_set(&mdata->active_intf_cnt, 0);
 	init_waitqueue_head(&mdata->secure_waitq);
-
-	mdss_res->mdss_util = mdss_get_util_intf();
-	if (mdss_res->mdss_util == NULL) {
-		pr_err("Failed to get mdss utility functions\n");
-		return -ENODEV;
-	}
 
 	mdss_res->mdss_util->get_iommu_domain = mdss_smmu_get_domain_id;
 	mdss_res->mdss_util->iommu_attached = is_mdss_iommu_attached;
@@ -3119,10 +3126,6 @@ static int mdss_mdp_probe(struct platform_device *pdev)
 	rc = mdss_res->mdss_util->register_irq(&mdss_mdp_hw);
 	if (rc)
 		pr_err("mdss_register_irq failed.\n");
-
-	rc = mdss_smmu_init(mdata, &pdev->dev);
-	if (rc)
-		pr_err("mdss smmu init failed\n");
 
 	mdss_mdp_set_supported_formats(mdata);
 

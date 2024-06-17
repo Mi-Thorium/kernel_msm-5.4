@@ -7,7 +7,8 @@ obj-$(CONFIG_MSM_DBA) += msm_dba/
 ifeq ($(CONFIG_FB_MSM_MDSS_MDP3), y)
 ccflags-y += -DTARGET_HW_MDSS_MDP3
 endif
-mdss-mdp-objs := mdss_mdp.o mdss_mdp_ctl.o mdss_mdp_pipe.o mdss_mdp_util.o dsi_status_6g.o
+mdss-mdp-objs := mdss_smmu.o
+mdss-mdp-objs += mdss_mdp.o mdss_mdp_ctl.o mdss_mdp_pipe.o mdss_mdp_util.o dsi_status_6g.o
 mdss-mdp-objs += mdss_mdp_pp.o mdss_mdp_pp_debug.o mdss_mdp_pp_cache_config.o mdss_sync.o
 mdss-mdp-objs += mdss_mdp_intf_video.o
 mdss-mdp-objs += mdss_mdp_intf_cmd.o
@@ -17,7 +18,6 @@ mdss-mdp-objs += mdss_mdp_overlay.o
 mdss-mdp-objs += mdss_mdp_layer.o
 mdss-mdp-objs += mdss_mdp_splash_logo.o
 mdss-mdp-objs += mdss_mdp_cdm.o
-mdss-mdp-objs += mdss_smmu.o
 mdss-mdp-objs += mdss_mdp_wfd.o
 mdss-mdp-objs += mdss_io_util.o
 obj-$(CONFIG_FB_MSM_MDSS) += mdss-mdp.o

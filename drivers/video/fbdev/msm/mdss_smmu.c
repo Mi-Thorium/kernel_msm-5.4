@@ -101,24 +101,22 @@ static int mdss_smmu_secure_session_ctrl(int enable)
 
 static inline bool all_devices_probed(struct mdss_smmu_private *prv)
 {
-	struct device_node *child;
+	struct device_node *parent, *child;
 	struct mdss_smmu_client *tmp;
 	int d_cnt = 0;
 	int p_cnt = 0;
 
-	if (!prv->pdev)
-		return false;
+	list_for_each_entry(tmp, &prv->smmu_device_list, _client) {
+		p_cnt++;
+		parent = tmp->base.dev->of_node->parent;
+	}
 
-	for_each_child_of_node(prv->pdev, child) {
+	for_each_child_of_node(parent, child) {
 		char name[MDSS_SMMU_COMPAT_STR_LEN] = {};
 
 		strlcpy(name, child->name, sizeof(name));
 		if (is_mdss_smmu_compatible_device(name))
 			d_cnt++;
-	}
-
-	list_for_each_entry(tmp, &prv->smmu_device_list, _client) {
-		p_cnt++;
 	}
 
 	return (d_cnt && (d_cnt == p_cnt));
@@ -716,32 +714,48 @@ static void mdss_smmu_ops_init(struct mdss_data_type *mdata)
  * mdss_mdp here. This would facilitate probes to happen for these devices in
  * which the smmu mapping and initialization is handled.
  */
-void mdss_smmu_device_create(struct device *dev)
+static void mdss_smmu_device_create(struct mdss_data_type *mdata,
+				struct mdss_smmu_private *prv, struct device *dev)
 {
-	struct device_node *parent, *child;
-	struct mdss_smmu_private *prv = mdss_smmu_get_private();
+	struct device_node *parent;
+	struct mdss_smmu_client *mdss_smmu;
+	int i;
 
 	parent = dev->of_node;
-	for_each_child_of_node(parent, child) {
-		char name[MDSS_SMMU_COMPAT_STR_LEN] = {};
-
-		strlcpy(name, child->name, sizeof(name));
-		if (is_mdss_smmu_compatible_device(name))
-			of_platform_device_create(child, NULL, dev);
-	}
 	prv->pdev = parent;
+
+	for (i = 0; i < MDSS_IOMMU_MAX_DOMAIN; i++) {
+		mdss_smmu = &prv->mdss_smmu[i];
+		mdata->mdss_smmu[i] = mdss_smmu;
+		if (!mdss_smmu->base.dev)
+			continue;
+		mdss_smmu->base.iommu_ctrl = mdata->mdss_util->iommu_ctrl;
+		mdss_smmu->base.reg_lock = mdata->mdss_util->vbif_reg_lock;
+		mdss_smmu->base.reg_unlock = mdata->mdss_util->vbif_reg_unlock;
+		mdss_smmu->base.secure_session_ctrl =
+			mdata->mdss_util->secure_session_ctrl;
+		mdss_smmu->base.wait_for_transition = mdss_smmu_secure_wait;
+		mdss_smmu->base.handoff_pending = mdata->mdss_util->mdp_handoff_pending;
+	}
 }
 
 int mdss_smmu_init(struct mdss_data_type *mdata, struct device *dev)
 {
+	struct mdss_smmu_private *prv = mdss_smmu_get_private();
+
 	mdata->mdss_util->iommu_lock = mdss_iommu_lock;
 	mdata->mdss_util->iommu_unlock = mdss_iommu_unlock;
 	mdata->mdss_util->iommu_ctrl = mdss_iommu_ctrl;
 	mdata->mdss_util->secure_session_ctrl =
 		mdss_smmu_secure_session_ctrl;
 
-	mdss_smmu_device_create(dev);
+	mdss_smmu_device_create(mdata, prv, dev);
 	mdss_smmu_ops_init(mdata);
+
+	if (!all_devices_probed(prv)) {
+		dev_err(dev, "%s: Not all SMMU devices are probed yet\n", __func__);
+		return -ENODEV;
+	}
 
 	return 0;
 }
@@ -776,7 +790,6 @@ MODULE_DEVICE_TABLE(of, mdss_smmu_dt_match);
 int mdss_smmu_probe(struct platform_device *pdev)
 {
 	struct device *dev;
-	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 	struct mdss_smmu_private *prv = mdss_smmu_get_private();
 	struct mdss_smmu_client *mdss_smmu;
 	int rc = 0;
@@ -785,11 +798,6 @@ int mdss_smmu_probe(struct platform_device *pdev)
 	struct dss_module_power *mp;
 	char name[MAX_CLIENT_NAME_LEN];
 	const __be32 *address = NULL, *size = NULL;
-
-	if (!mdata) {
-		pr_err("probe failed as mdata is not initialized\n");
-		return -EPROBE_DEFER;
-	}
 
 	match = of_match_device(mdss_smmu_dt_match, &pdev->dev);
 	if (!match || !match->data) {
@@ -818,7 +826,7 @@ int mdss_smmu_probe(struct platform_device *pdev)
 		}
 	}
 
-	mdss_smmu = &mdata->mdss_smmu[smmu_domain.domain];
+	mdss_smmu = &prv->mdss_smmu[smmu_domain.domain];
 	mdss_smmu->base.domain = smmu_domain.domain;
 	mp = &mdss_smmu->mp;
 	mdss_smmu->base.is_secure = false;
@@ -880,10 +888,7 @@ int mdss_smmu_probe(struct platform_device *pdev)
 		mdss_smmu->base.is_secure = true;
 	}
 
-	if (!mdata->handoff_pending)
-		mdss_smmu_enable_power(mdss_smmu, false);
-	else
-		mdss_smmu->handoff_pending = true;
+	mdss_smmu_enable_power(mdss_smmu, false);
 
 	mdss_smmu->base.dev = dev;
 	mdss_smmu->domain_attached = true;
@@ -898,14 +903,6 @@ int mdss_smmu_probe(struct platform_device *pdev)
 	} else {
 		pr_debug("unable to map context bank base\n");
 	}
-
-	mdss_smmu->base.iommu_ctrl = mdata->mdss_util->iommu_ctrl;
-	mdss_smmu->base.reg_lock = mdata->mdss_util->vbif_reg_lock;
-	mdss_smmu->base.reg_unlock = mdata->mdss_util->vbif_reg_unlock;
-	mdss_smmu->base.secure_session_ctrl =
-		mdata->mdss_util->secure_session_ctrl;
-	mdss_smmu->base.wait_for_transition = mdss_smmu_secure_wait;
-	mdss_smmu->base.handoff_pending = mdata->mdss_util->mdp_handoff_pending;
 
 	list_add(&mdss_smmu->_client, &prv->smmu_device_list);
 

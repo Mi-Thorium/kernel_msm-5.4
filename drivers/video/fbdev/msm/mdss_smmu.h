@@ -12,8 +12,8 @@
 #include "mdss_mdp.h"
 #include "mdss_debug.h"
 
-#define MDSS_SMMU_COMPATIBLE "qcom,smmu"
-#define MDSS_SMMU_COMPAT_STR_LEN 10
+#define MDSS_SMMU_COMPATIBLE "qcom,smmu_"
+#define MDSS_SMMU_COMPAT_STR_LEN 11
 #define SMMU_CBN_FSYNR1		0x6c
 
 struct mdss_iommu_map_type {
@@ -35,6 +35,7 @@ struct mdss_smmu_private {
 	struct list_head smmu_device_list;
 	struct list_head user_list;
 	struct mutex smmu_reg_lock;
+	struct mdss_smmu_client mdss_smmu[MDSS_IOMMU_MAX_DOMAIN];
 };
 
 void mdss_smmu_register(struct device *dev);
@@ -48,6 +49,11 @@ enum smmu_attributes {
 static inline int mdss_smmu_dma_data_direction(int dir)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
 
 	return (mdss_has_quirk(mdata, MDSS_QUIRK_DMA_BI_DIR)) ?
 		DMA_BIDIRECTIONAL : dir;
@@ -68,6 +74,10 @@ static inline bool is_mdss_smmu_compatible_device(const char *str)
 static inline bool mdss_smmu_is_valid_domain_type(struct mdss_data_type *mdata,
 		int domain_type)
 {
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return false;
+	}
 	if ((domain_type == MDSS_IOMMU_DOMAIN_ROT_UNSECURE ||
 			domain_type == MDSS_IOMMU_DOMAIN_ROT_SECURE) &&
 			!mdss_mdp_is_nrt_vbif_base_defined(mdata))
@@ -80,6 +90,10 @@ static inline bool mdss_smmu_is_valid_domain_condition(
 	int domain_type,
 	bool is_attach)
 {
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return false;
+	}
 	if (is_attach) {
 		if (test_bit(MDSS_CAPS_SEC_DETACH_SMMU,
 			mdata->mdss_caps_map) &&
@@ -111,16 +125,26 @@ static inline struct mdss_smmu_client *mdss_smmu_get_cb(u32 domain)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return NULL;
+	}
+
 	if (!mdss_smmu_is_valid_domain_type(mdata, domain))
 		return NULL;
 
 	return (domain >= MDSS_IOMMU_MAX_DOMAIN) ? NULL :
-			&mdata->mdss_smmu[domain];
+			mdata->mdss_smmu[domain];
 }
 
 static inline int is_mdss_iommu_attached(void)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return false;
+	}
 
 	return mdata ? mdata->iommu_attached : false;
 }
@@ -130,13 +154,18 @@ static inline int mdss_smmu_get_domain_type(u64 flags, bool rotator)
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 	int type;
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
+
 	if (flags & MDP_SECURE_OVERLAY_SESSION) {
 		type = (rotator &&
-		    mdata->mdss_smmu[MDSS_IOMMU_DOMAIN_ROT_SECURE].base.dev) ?
+		    mdata->mdss_smmu[MDSS_IOMMU_DOMAIN_ROT_SECURE]->base.dev) ?
 		    MDSS_IOMMU_DOMAIN_ROT_SECURE : MDSS_IOMMU_DOMAIN_SECURE;
 	} else {
 		type = (rotator &&
-		    mdata->mdss_smmu[MDSS_IOMMU_DOMAIN_ROT_UNSECURE].base.dev) ?
+		    mdata->mdss_smmu[MDSS_IOMMU_DOMAIN_ROT_UNSECURE]->base.dev) ?
 		    MDSS_IOMMU_DOMAIN_ROT_UNSECURE : MDSS_IOMMU_DOMAIN_UNSECURE;
 	}
 	return type;
@@ -145,6 +174,11 @@ static inline int mdss_smmu_get_domain_type(u64 flags, bool rotator)
 static inline int mdss_smmu_attach(struct mdss_data_type *mdata)
 {
 	int rc;
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
 
 	mdata->mdss_util->iommu_lock();
 	MDSS_XLOG(mdata->iommu_attached);
@@ -173,6 +207,11 @@ static inline int mdss_smmu_detach(struct mdss_data_type *mdata)
 {
 	int rc;
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
+
 	mdata->mdss_util->iommu_lock();
 	MDSS_XLOG(mdata->iommu_attached);
 
@@ -200,10 +239,15 @@ static inline int mdss_smmu_get_domain_id(u32 type)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
+
 	if (!mdss_smmu_is_valid_domain_type(mdata, type))
 		return -ENODEV;
 
-	if (!mdata || !mdata->smmu_ops.smmu_get_domain_id
+	if (!mdata->smmu_ops.smmu_get_domain_id
 			|| type >= MDSS_IOMMU_MAX_DOMAIN)
 		return -ENODEV;
 
@@ -215,7 +259,12 @@ static inline struct dma_buf_attachment *mdss_smmu_dma_buf_attach(
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
-	if (!mdata || !mdata->smmu_ops.smmu_dma_buf_attach)
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return NULL;
+	}
+
+	if (!mdata->smmu_ops.smmu_dma_buf_attach)
 		return NULL;
 
 	return mdata->smmu_ops.smmu_dma_buf_attach(dma_buf, dev, domain);
@@ -226,6 +275,11 @@ static inline int mdss_smmu_map_dma_buf(struct dma_buf *dma_buf,
 		unsigned long *size, int dir)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
 
 	if (!mdata->smmu_ops.smmu_map_dma_buf)
 		return -ENODEV;
@@ -240,6 +294,11 @@ static inline void mdss_smmu_unmap_dma_buf(struct sg_table *table, int domain,
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return;
+	}
+
 	if (mdata->smmu_ops.smmu_unmap_dma_buf)
 		mdata->smmu_ops.smmu_unmap_dma_buf(table, domain,
 		mdss_smmu_dma_data_direction(dir), dma_buf);
@@ -251,7 +310,12 @@ static inline int mdss_smmu_dma_alloc_coherent(struct device *dev, size_t size,
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
-	if (!mdata || !mdata->smmu_ops.smmu_dma_alloc_coherent)
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
+
+	if (!mdata->smmu_ops.smmu_dma_alloc_coherent)
 		return -ENODEV;
 
 	return mdata->smmu_ops.smmu_dma_alloc_coherent(dev, size,
@@ -263,7 +327,12 @@ static inline void mdss_smmu_dma_free_coherent(struct device *dev, size_t size,
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
-	if (mdata && mdata->smmu_ops.smmu_dma_free_coherent)
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return;
+	}
+
+	if (mdata->smmu_ops.smmu_dma_free_coherent)
 		mdata->smmu_ops.smmu_dma_free_coherent(dev, size, cpu_addr,
 			phys, iova, domain);
 }
@@ -272,6 +341,11 @@ static inline int mdss_smmu_map(int domain, phys_addr_t iova, phys_addr_t phys,
 		int gfp_order, int prot)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
 
 	if (!mdata->smmu_ops.smmu_map)
 		return -ENODEV;
@@ -284,6 +358,11 @@ static inline void mdss_smmu_unmap(int domain, unsigned long iova,
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return;
+	}
+
 	if (mdata->smmu_ops.smmu_unmap)
 		mdata->smmu_ops.smmu_unmap(domain, iova, gfp_order);
 }
@@ -292,6 +371,11 @@ static inline char *mdss_smmu_dsi_alloc_buf(struct device *dev, int size,
 		dma_addr_t *dmap, gfp_t gfp)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return NULL;
+	}
 
 	if (!mdata->smmu_ops.smmu_dsi_alloc_buf)
 		return NULL;
@@ -304,6 +388,11 @@ static inline int mdss_smmu_dsi_map_buffer(phys_addr_t phys,
 		void *cpu_addr, int dir)
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
+
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return -ENODEV;
+	}
 
 	if (!mdata->smmu_ops.smmu_dsi_map_buffer)
 		return -ENODEV;
@@ -318,6 +407,11 @@ static inline void mdss_smmu_dsi_unmap_buffer(dma_addr_t dma_addr, int domain,
 {
 	struct mdss_data_type *mdata = mdss_mdp_get_mdata();
 
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return;
+	}
+
 	if (mdata->smmu_ops.smmu_dsi_unmap_buffer)
 		mdata->smmu_ops.smmu_dsi_unmap_buffer(dma_addr, domain,
 			size, mdss_smmu_dma_data_direction(dir));
@@ -325,6 +419,11 @@ static inline void mdss_smmu_dsi_unmap_buffer(dma_addr_t dma_addr, int domain,
 
 static inline void mdss_smmu_deinit(struct mdss_data_type *mdata)
 {
+	if (!mdata) {
+		WARN(1, "MDSS MDP is not ready yet, Aborting\n");
+		return;
+	}
+
 	if (mdata->smmu_ops.smmu_deinit)
 		mdata->smmu_ops.smmu_deinit(mdata);
 }
